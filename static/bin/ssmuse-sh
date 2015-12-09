@@ -1,0 +1,35 @@
+#! /bin/bash
+#
+# __ssmuse-sh
+
+function __ssmuse_sh {
+	typeset noeval
+	typeset tmpfile
+
+	noeval=$1; shift 1
+
+	trap "[ -n \"\${tmpfile}\" ] && rm -f \"${tmpfile}\"" TERM EXIT
+	if [ "${noeval}" = "noeval" ]; then
+		__ssmuse.py sh "${@}"
+	else
+		tmpfile=$(__ssmuse.py sh --tmp "${@}")
+		. "${tmpfile}"
+		rm -f "${tmpfile}"
+	fi
+}
+
+case $1 in
+--noeval)
+	shift 1
+	__ssmuse_sh noeval "$@"
+	;;
+-h|--help)
+	shift 1
+	__ssmuse_sh noeval -h
+	;;
+*)
+	__ssmuse_sh eval "$@"
+	;;
+esac
+
+unset __ssmuse_sh
