@@ -1,0 +1,7 @@
+Package: ssmuse
+Version: xxx
+Section: admin
+Priority: optional
+Architecture:
+Maintainer: John Marshall <John.Marshall@ssc-spc.gc.ca>
+Description: Loader for SSM domains and packages
