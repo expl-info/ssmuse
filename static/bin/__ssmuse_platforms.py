@@ -30,76 +30,61 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # GPL--end
 
-get_plat_arch() {
-	local plat_dist plat_ver plat_arch
+import os
+import subprocess
 
-	plat_dist=$1
-	plat_ver=$2
+uname = os.uname()
 
-	case "${UNAME_S}" in
-	AIX)
-		case "`lsattr -El proc0 -a type | cut -f2 -d' '`" in
-		PowerPC_POWER7)
-			plat_arch="ppc7-64"
-			;;
-		PowerPC_POWER5)
-			plat_arch="ppc-64"
-			;;
-		*)
+def get_plat_arch(plat_dist, plat_ver):
+	plat_arch = "unk-unk"
+
+	if uname.sysname == "AIX":
+		p = subprocess.Popen("lsattr -El proc0 -a type", stdout=subprocess.PIPE)
+		x, _ = p.communicate()
+		x = x.split()[2]
+		if x == "PowerPC_POWER7":
+			plat_arch = "ppc7-64"
+		elif x == "PowerPC_POWER5":
+			plat_arch = "ppc-64"
+		else:
 			# 32 or 64?
-			plat_arch="ppc-32"
-			;;
-		esac
-		;;
-	Linux|FreeBSD|CYGWIN_NT-5.1)
-		case "${UNAME_M}" in
-		i[3456]86)
-			plat_arch="${UNAME_M}-32"
-			;;
-		x86_64|amd64)
+			plat_arch = "ppc-32"
+	elif uname.sysname in ["Linux", "FreeBSD", "CYGWIN_NT-5.1"]:
+		if uname.machine in ["i386", "i486", "i586", "i686"]:
+			plat_arch = "%s-32" % (uname.sysname,)
+		elif uname.sysname in ["x86_64", "amd64"]:
 			plat_arch="amd64-64"
-			;;
-		*)
-			plat_arch="unk-unk"
-			;;
-		esac
-		;;
-	IRIX64)
-		plat_arch=mips-64
-		;;
-	*)
-		plat_arch="unk-unk"
-		;;
-	esac
-	echo "${plat_arch}"
-}
+	elif uname.sysname == "IRIX64":
+		plat_arch = "mips-64"
+	return plat_arch
 
-aix_platform() {
-	local plat_dist plat_ver plat_arch
-
-	plat_dist="aix"
-	plat_ver="`uname -v`.`uname -r`"
-	plat_arch=`get_plat_arch ${plat_dist} ${plat_ver}`
-	echo "${plat_dist}-${plat_ver}-${plat_arch}"
-}
+def aix_platform():
+	plat_dist = "aix"
+	plat_ver = "%s.%s" % (uname.version, uname.release)
+	plat_arch = get_plat_arch(plat_dist, plat_ver)
+	return plat_arch
 
 freebsd_platform() {
-	local plat_dist plat_ver plat_arch
+	plat_dist = "freebsd"
+	plat_ver = uname.release.split("-")[0]
+	plat_arch = get_plat_arch(plat_dist, plat_ver)
+	return "%s-%s-%s" % (plat_dist, plat_ver, plat_arch)
 
-	plat_dist="freebsd"
-	plat_ver="`uname -r`"
-	plat_ver=${plat_ver%%-*}
-	plat_arch=`get_plat_arch ${plat_dist} ${plat_ver}`
-	echo "${plat_dist}-${plat_ver}-${plat_arch}"
-}
 
-irix64_platform() {
-	:
-}
+def irix64_platform():
+	pass
 
-linux_platform_lsb() {
-	local plat_dist plat_ver plat_arch
-	local line lines
+def linux_platform_lsb():
+	plat_dist = ""
+	plat_ver = ""
+	for line in open("/etc/lsb-release"):
+		if line.startswith("DISTRIB_ID"):
+			plat_dist = line.split("=", 1)[1]
+		elif line.startswith("DISTRIB_RELEASE"):
+			plat_ver = line.split("=", 1)[1]
+
+	lines = [line for line in open("/etc/lsb-release").read() \
+		if line.startswith("DISTRIB_ID") or line.startswith("DISTRIB_RELEASE")]
 
 	# faster than cat which also requires extra, useless case tests
 	OIFS="${IFS}"; IFS="${NEWLINE}"

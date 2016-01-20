@@ -4,16 +4,15 @@
 # __ssmuse.py
 
 import os
-from os import environ, listdir
 from os.path import basename, dirname, exists, isdir, realpath
 from os.path import join as joinpath
-from socket import gethostname
+import socket
 import subprocess
-from sys import argv, exit, stderr, stdout
-from tempfile import mkstemp
-from time import asctime
+import sys
+import tempfile
+import time
 
-out = stdout
+out = sys.stdout
 
 ##
 ## csh support
@@ -105,7 +104,7 @@ def sh_unexportvar(name):
 ##
 
 def getplatforms():
-    platforms = environ.get("SSMUSE_PLATFORMS")
+    platforms = os.environ.get("SSMUSE_PLATFORMS")
     if platforms == None:
         if exists("/etc/ssm/platforms"):
             platforms = open("/etc/ssm/platforms").read()
@@ -115,15 +114,15 @@ def getplatforms():
     return filter(None, platforms.split())
 
 def isemptydir(path):
-    l = listdir(path)
+    l = os.listdir(path)
     return len(l) == 0
 
 def islibfreedir(path):
-    l = [name for name in listdir(path) if name.endswith(".a") or name.endswith(".so")]
+    l = [name for name in os.listdir(path) if name.endswith(".a") or name.endswith(".so")]
     return len(l) == 0
 
 def printe(s):
-    stderr.write(s+"\n")
+    sys.stderr.write(s+"\n")
 
 ##
 ##
@@ -135,12 +134,12 @@ def augmentssmpath(path):
         or path.startswith("../*"):
         pass
     else:
-        path = joinpath(environ.get("SSM_DOMAIN_BASE", ""), path)
+        path = joinpath(os.environ.get("SSM_DOMAIN_BASE", ""), path)
     return path
 
 def deduppaths():
     echo2err("deduppaths:")
-    for name in ["PATH", "CPATH", "LIBPATH", "LD_LIBRARY_PATH", "MANPATH", "PYTHONPATH", "TCLLIBRARY"]:
+    for name in ["PATH", "CPATH", "LIBPATH", "LD_LIBRARY_PATH", "MANPATH", "PYTHONPATH", "TCL_LIBRARY"]:
         deduppath(name)
 
 def exportpendlibpath(pend, name, path):
@@ -167,14 +166,14 @@ def exportpendpaths(pend, basepath):
     exportpendpath(pend, "CPATH", joinpath(basepath, "include"))
     exportpendlibpath(pend, "LIBPATH", joinpath(basepath, "lib"))
     exportpendlibpath(pend, "LD_LIBRARY_PATH", joinpath(basepath, "lib"))
-    if environ.get("COMP_ARCH"):
-        comparch = environ.get("COMP_ARCH")
+    if os.environ.get("COMP_ARCH"):
+        comparch = os.environ.get("COMP_ARCH")
         exportpendlibpath(pend, "LIBPATH", joinpath(basepath, "lib", comparch))
         exportpendlibpath(pend, "LD_LIBRARY_PATH", joinpath(basepath, "lib", comparch))
     exportpendpath(pend, "MANPATH", joinpath(basepath, "man"))
     exportpendpath(pend, "MANPATH", joinpath(basepath, "share/man"))
     exportpendpath(pend, "PYTHONPATH", joinpath(basepath, "lib/python"))
-    exportpendpath(pend, "TCLLIBRARY", joinpath(basepath, "lib/tcl"))
+    exportpendpath(pend, "TCL_LIBRARY", joinpath(basepath, "lib/tcl"))
 
 def loaddomain(pend, dompath):
     dompath = augmentssmpath(dompath)
@@ -227,7 +226,7 @@ def loadprofiles(dompath, platform):
 
     root = joinpath(dompath, platform, "etc/profile.d")
     suff = ".%s" % (shell,)
-    names = [name for name in listdir(root) if name.endswith(suff)]
+    names = [name for name in os.listdir(root) if name.endswith(suff)]
     for name in names:
         path = joinpath(root, name)
         if exists(path):
@@ -260,7 +259,7 @@ if __name__ == "__main__":
     tmpname = None
     verbose = 0
 
-    args = argv[1:]
+    args = sys.argv[1:]
 
     if not args:
         printe("fatal: missing shell type")
@@ -298,7 +297,7 @@ if __name__ == "__main__":
     if args and args[0] == "--tmp":
         args.pop(0)
         try:
-            fd, tmpname = mkstemp(prefix="ssmuse", dir="/tmp")
+            fd, tmpname = tempfile.mkstemp(prefix="ssmuse", dir="/tmp")
             out = os.fdopen(fd, "w")
             comment("remove self/temp file")
             execute("/bin/rm -f %s" % (tmpname,))
@@ -315,8 +314,8 @@ if __name__ == "__main__":
         platforms = getplatforms()
         revplatforms = platforms[::-1]
 
-        comment("host (%s)" % (gethostname(),))
-        comment("date (%s)" % (asctime(),))
+        comment("host (%s)" % (socket.gethostname(),))
+        comment("date (%s)" % (time.asctime(),))
         comment("platforms (%s)" % (" ".join(platforms),))
 
         while args:
