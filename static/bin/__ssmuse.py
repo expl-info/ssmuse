@@ -310,7 +310,7 @@ if __name__ == "__main__":
             exit(1)
 
     try:
-        heredir = realpath(dirname(argv[0]))
+        heredir = realpath(dirname(sys.argv[0]))
 
         platforms = getplatforms()
         revplatforms = platforms[::-1]
