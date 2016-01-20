@@ -225,12 +225,13 @@ def loadprofiles(dompath, platform):
     echo2err("loadprofiles: (%s) (%s)" % (dompath, platform))
 
     root = joinpath(dompath, platform, "etc/profile.d")
-    suff = ".%s" % (shell,)
-    names = [name for name in os.listdir(root) if name.endswith(suff)]
-    for name in names:
-        path = joinpath(root, name)
-        if exists(path):
-            sourcefile(path)
+    if exists(root):
+        suff = ".%s" % (shell,)
+        names = [name for name in os.listdir(root) if name.endswith(suff)]
+        for name in names:
+            path = joinpath(root, name)
+            if exists(path):
+                sourcefile(path)
 
 HELP = """\
 usage: ssmuse-sh [options]
