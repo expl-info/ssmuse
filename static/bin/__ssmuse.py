@@ -152,11 +152,11 @@ def exportpendmpaths(pend, name, paths):
             exportpendpath(pend, name, path)
 
 def exportpendpath(pend, name, path):
-    if pend == "prepend":
-        val = "%s:${%s}" % (path, name)
-    elif pend == "append":
-        val = "${%s}:%s" % (name, path)
     if isdir(path) and not isemptydir(path):
+        if pend == "prepend":
+            val = "%s:${%s}" % (path, name)
+        elif pend == "append":
+            val = "${%s}:%s" % (name, path)
         exportpath(name, val, path)
 
 def exportpendpaths(pend, basepath):
