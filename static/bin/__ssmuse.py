@@ -114,10 +114,14 @@ def getplatforms():
     return filter(None, platforms.split())
 
 def isemptydir(path):
+    if not isdir(path):
+        return True
     l = os.listdir(path)
     return len(l) == 0
 
 def islibfreedir(path):
+    if not isdir(path):
+        return True
     l = [name for name in os.listdir(path) if name.endswith(".a") or name.endswith(".so")]
     return len(l) == 0
 
