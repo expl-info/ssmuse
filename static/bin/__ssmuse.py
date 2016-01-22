@@ -166,10 +166,11 @@ def exportpendpaths(pend, basepath):
     exportpendpath(pend, "CPATH", joinpath(basepath, "include"))
     exportpendlibpath(pend, "LIBPATH", joinpath(basepath, "lib"))
     exportpendlibpath(pend, "LD_LIBRARY_PATH", joinpath(basepath, "lib"))
-    if os.environ.get("COMP_ARCH"):
-        comparch = os.environ.get("COMP_ARCH")
-        exportpendlibpath(pend, "LIBPATH", joinpath(basepath, "lib", comparch))
-        exportpendlibpath(pend, "LD_LIBRARY_PATH", joinpath(basepath, "lib", comparch))
+    #if os.environ.get("COMP_ARCH"):
+        #comparch = os.environ.get("COMP_ARCH")
+        #exportpendlibpath(pend, "LIBPATH", joinpath(basepath, "lib", comparch))
+        #exportpendlibpath(pend, "LD_LIBRARY_PATH", joinpath(basepath, "lib", comparch))
+
     exportpendpath(pend, "MANPATH", joinpath(basepath, "man"))
     exportpendpath(pend, "MANPATH", joinpath(basepath, "share/man"))
     exportpendpath(pend, "PYTHONPATH", joinpath(basepath, "lib/python"))
