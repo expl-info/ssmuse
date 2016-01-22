@@ -358,6 +358,8 @@ if __name__ == "__main__":
         if tmpname:
             print "%s" % (tmpname,)
     except:
+        import traceback
+        #traceback.print_exc()
         printe("abort: unrecoverable error")
         if tmpname:
             os.remove(tmpname)
