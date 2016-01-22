@@ -176,8 +176,21 @@ def exportpendpaths(pend, basepath):
 
     exportpendpath(pend, "PATH", joinpath(basepath, "bin"))
     exportpendpath(pend, "CPATH", joinpath(basepath, "include"))
-    exportpendlibpath(pend, "LIBPATH", joinpath(basepath, "lib"))
-    exportpendlibpath(pend, "LD_LIBRARY_PATH", joinpath(basepath, "lib"))
+
+    # special handling for lib
+    ssmuse_libdirs = resolvepcvar(os.environ.get("SSMUSE_LIBDIRS", "")).split(":")
+    ssmuse_libdirs = ["/lib"]+filter(None, ssmuse_libdirs)
+    paths = []
+    for name in ssmuse_libdirs:
+        if name.startswith("/"):
+            path = joinpath(basepath, name[1:])
+        else:
+            path = joinpath(basepath, "lib", name)
+        if not islibfreedir(path):
+            paths.append(path)
+    exportpendmpaths(pend, "LIBPATH", paths)
+    exportpendmpaths(pend, "LD_LIBRARY_PATH", paths)
+
     #if os.environ.get("COMP_ARCH"):
         #comparch = os.environ.get("COMP_ARCH")
         #exportpendlibpath(pend, "LIBPATH", joinpath(basepath, "lib", comparch))
