@@ -138,7 +138,13 @@ def augmentssmpath(path):
         or path.startswith("../*"):
         pass
     else:
-        path = joinpath(os.environ.get("SSM_DOMAIN_BASE", ""), path)
+        if "SSMUSE_DOMAIN_BASE" in os.environ:
+            key = "SSMUSE_DOMAIN_BASE"
+        elif "SSMUSE_BASE" in os.environ:
+            key = "SSMUSE_BASE"
+        else:
+            key = "SSM_DOMAIN_BASE"
+        path = joinpath(os.environ.get(key, ""), path)
     return path
 
 def deduppaths():
