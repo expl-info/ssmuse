@@ -175,7 +175,20 @@ def exportpendpaths(pend, basepath):
     echo2err("exportpendpaths: (%s) (%s)" % (pend, basepath))
 
     exportpendpath(pend, "PATH", joinpath(basepath, "bin"))
-    exportpendpath(pend, "CPATH", joinpath(basepath, "include"))
+
+    # special handling for include
+    ssmuse_incdirs = resolvepcvar(os.environ.get("SSMUSE_INCDIRS", "")).split(":")
+    ssmuse_incdirs = ["/include"]+filter(None, ssmuse_incdirs)
+    paths = []
+    for name in ssmuse_incdirs:
+        if name.startswith("/"):
+            path = joinpath(basepath, name[1:])
+        else:
+            path = joinpath(basepath, "include", name)
+        if not isemptydir(path):
+            paths.append(path)
+    exportpendmpaths(pend, "CPATH", paths)
+    exportpendmpaths(pend, "SSM_INCLUDE_PATH", paths)
 
     # special handling for lib
     ssmuse_libdirs = resolvepcvar(os.environ.get("SSMUSE_LIBDIRS", "")).split(":")
