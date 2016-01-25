@@ -132,6 +132,15 @@ def printe(s):
 ##
 ##
 
+def __exportpendpath(pend, name, path):
+    """No checks.
+    """
+    if pend == "prepend":
+        val = "%s:${%s}" % (path, name)
+    elif pend == "append":
+        val = "${%s}:%s" % (name, path)
+    exportpath(name, val, path)
+
 def augmentssmpath(path):
     if path.startswith("/") \
         or path.startswith("./") \
@@ -154,22 +163,17 @@ def deduppaths():
 
 def exportpendlibpath(pend, name, path):
     if isdir(path) and not islibfreedir(path):
-        exportpendpath(pend, name, path)
+        __exportpendpath(pend, name, path)
 
 def exportpendmpaths(pend, name, paths):
     if pend == "prepend":
         paths = reversed(paths)
     for path in paths:
-        if isdir(path):
-            exportpendpath(pend, name, path)
+        exportpendpath(pend, name, path)
 
 def exportpendpath(pend, name, path):
     if isdir(path) and not isemptydir(path):
-        if pend == "prepend":
-            val = "%s:${%s}" % (path, name)
-        elif pend == "append":
-            val = "${%s}:%s" % (name, path)
-        exportpath(name, val, path)
+        __exportpendpath(pend, name, path)
 
 def exportpendpaths(pend, basepath):
     echo2err("exportpendpaths: (%s) (%s)" % (pend, basepath))
