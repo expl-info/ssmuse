@@ -125,8 +125,25 @@ def islibfreedir(path):
     l = [name for name in os.listdir(path) if name.endswith(".a") or name.endswith(".so")]
     return len(l) == 0
 
+def isnotemptydir(path):
+    return not isemptydir(path)
+
+def isnotlibfreedir(path):
+    return not islibfreedir(path)
+
 def printe(s):
     sys.stderr.write(s+"\n")
+
+VARS_SETUPTABLE = [
+    # envvars, basenames, XDIR envvar, testfn
+    (["PATH"], ["/bin"], None, None),
+    (["CPATH", "SSM_INCLUDE_PATH"], ["/include"], "SSMUSE_XINCDIRS", isnotemptydir),
+    (["LIBPATH", "LD_LIBRARY_PATH"], ["/lib"], "SSMUSE_XLIBDIRS", isnotlibfreedir),
+    (["MANPATH"], ["/man", "/share/man"], None, None),
+    (["PYTHONPATH"], ["/lib/python"], None, None),
+    (["TCL_LIBRARY"], ["/lib/tcl"], None, None),
+]
+VARS = [name for t in VARS_SETUPTABLE for name in t[0]]
 
 ##
 ##
@@ -166,7 +183,7 @@ def augmentssmpath(path):
 
 def deduppaths():
     echo2err("deduppaths:")
-    for name in ["PATH", "CPATH", "LIBPATH", "LD_LIBRARY_PATH", "MANPATH", "PYTHONPATH", "TCL_LIBRARY"]:
+    for name in VARS:
         deduppath(name)
 
 def exportpendlibpath(pend, name, path):
@@ -186,39 +203,25 @@ def exportpendpath(pend, name, path):
 def exportpendpaths(pend, basepath):
     echo2err("exportpendpaths: (%s) (%s)" % (pend, basepath))
 
-    exportpendpath(pend, "PATH", joinpath(basepath, "bin"))
-
-    # special handling for include
-    ssmuse_incdirs = resolvepcvar(os.environ.get("SSMUSE_XINCDIRS", "")).split(":")
-    ssmuse_incdirs = ["/include"]+filter(None, ssmuse_incdirs)
-    paths = []
-    for name in ssmuse_incdirs:
-        if name.startswith("/"):
-            path = joinpath(basepath, name[1:])
+    # table-driven
+    for varnames, basenames, xdirsname, testfn in VARS_SETUPTABLE:
+        if xdirsname:
+            xdirnames = resolvepcvar(os.environ.get(xdirsname, "")).split(":")
+            xdirnames = filter(None, xdirnames)
         else:
-            path = joinpath(basepath, "include", name)
-        paths.append(path)
-    exportpendmpaths(pend, "CPATH", paths)
-    exportpendmpaths(pend, "SSM_INCLUDE_PATH", paths)
-
-    # special handling for lib
-    ssmuse_libdirs = resolvepcvar(os.environ.get("SSMUSE_XLIBDIRS", "")).split(":")
-    ssmuse_libdirs = ["/lib"]+filter(None, ssmuse_libdirs)
-    paths = []
-    for name in ssmuse_libdirs:
-        if name.startswith("/"):
-            path = joinpath(basepath, name[1:])
-        else:
-            path = joinpath(basepath, "lib", name)
-        if not islibfreedir(path):
-            paths.append(path)
-    __exportpendmpaths(pend, "LIBPATH", paths)
-    __exportpendmpaths(pend, "LD_LIBRARY_PATH", paths)
-
-    exportpendpath(pend, "MANPATH", joinpath(basepath, "man"))
-    exportpendpath(pend, "MANPATH", joinpath(basepath, "share/man"))
-    exportpendpath(pend, "PYTHONPATH", joinpath(basepath, "lib/python"))
-    exportpendpath(pend, "TCL_LIBRARY", joinpath(basepath, "lib/tcl"))
+            xdirnames = []
+        for basename in basenames:
+            dirnames = [basename]+xdirnames
+            paths = []
+            for name in dirnames:
+                if name.startswith("/"):
+                    path = joinpath(basepath, name[1:])
+                else:
+                    path = joinpath(basepath, basename[1:], name)
+                if testfn == None or testfn(path):
+                    paths.append(path)
+        for varname in varnames:
+            __exportpendmpaths(pend, varname, paths)
 
 def loaddomain(pend, dompath):
     dompath = augmentssmpath(dompath)
