@@ -189,7 +189,7 @@ def exportpendpaths(pend, basepath):
     exportpendpath(pend, "PATH", joinpath(basepath, "bin"))
 
     # special handling for include
-    ssmuse_incdirs = resolvepcvar(os.environ.get("SSMUSE_INCDIRS", "")).split(":")
+    ssmuse_incdirs = resolvepcvar(os.environ.get("SSMUSE_XINCDIRS", "")).split(":")
     ssmuse_incdirs = ["/include"]+filter(None, ssmuse_incdirs)
     paths = []
     for name in ssmuse_incdirs:
@@ -202,7 +202,7 @@ def exportpendpaths(pend, basepath):
     exportpendmpaths(pend, "SSM_INCLUDE_PATH", paths)
 
     # special handling for lib
-    ssmuse_libdirs = resolvepcvar(os.environ.get("SSMUSE_LIBDIRS", "")).split(":")
+    ssmuse_libdirs = resolvepcvar(os.environ.get("SSMUSE_XLIBDIRS", "")).split(":")
     ssmuse_libdirs = ["/lib"]+filter(None, ssmuse_libdirs)
     paths = []
     for name in ssmuse_libdirs:
