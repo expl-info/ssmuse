@@ -157,6 +157,8 @@ def exportpendlibpath(pend, name, path):
         exportpendpath(pend, name, path)
 
 def exportpendmpaths(pend, name, paths):
+    if pend == "prepend":
+        paths = reversed(paths)
     for path in paths:
         if isdir(path):
             exportpendpath(pend, name, path)
