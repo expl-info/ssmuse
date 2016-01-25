@@ -244,6 +244,18 @@ def loadprofiles(dompath, platform):
             if exists(path):
                 sourcefile(path)
 
+def resolvepcvar(s):
+    """Resolve instances of %varname% in s as environment variables.
+    """
+    l = s.split("%")
+    if len(l) % 2 != 1:
+        return s
+    l2 = [l[0]]
+    for i in range(1, len(l), 2):
+        v = os.environ.get(l[i], "%%%s%%" % l[i])
+        l2.extend([v, l[i+1]])
+    return "".join(l2)
+
 HELP = """\
 usage: ssmuse-sh [options]
        ssmuse-csh [options]
