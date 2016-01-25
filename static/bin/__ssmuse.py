@@ -189,8 +189,7 @@ def exportpendpaths(pend, basepath):
             path = joinpath(basepath, name[1:])
         else:
             path = joinpath(basepath, "include", name)
-        if not isemptydir(path):
-            paths.append(path)
+        paths.append(path)
     exportpendmpaths(pend, "CPATH", paths)
     exportpendmpaths(pend, "SSM_INCLUDE_PATH", paths)
 
