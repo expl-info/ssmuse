@@ -415,6 +415,8 @@ if __name__ == "__main__":
 
         if tmpname:
             print "%s" % (tmpname,)
+    except SystemExit:
+        raise
     except:
         import traceback
         #traceback.print_exc()
