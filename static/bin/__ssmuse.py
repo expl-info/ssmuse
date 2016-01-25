@@ -161,10 +161,12 @@ def __exportpendpath(pend, name, path):
 def __exportpendmpaths(pend, name, paths):
     """No checks.
     """
+    jpaths = ":".join(paths)
     if pend == "prepend":
-        paths = reversed(paths)
-    for path in paths:
-        __exportpendpath(pend, name, path)
+        val = "%s:${%s}" % (jpaths, name)
+    elif pend == "append":
+        val = "${%s}:%s" % (name, jpaths)
+    exportpath(name, val, jpaths)
 
 def augmentssmpath(path):
     if path.startswith("/") \
