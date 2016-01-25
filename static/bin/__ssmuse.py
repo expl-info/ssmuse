@@ -230,7 +230,7 @@ def loaddomain(pend, dompath):
 
     if not isdir(dompath):
         printe("loaddomain: invalid domain (%s)" % (dompath,))
-        exit(1)
+        sys.exit(1)
 
     echo2err("loaddomain: (%s) (%s)" % (pend, dompath))
 
@@ -257,7 +257,7 @@ def loadpackage(pend, pkgpath):
                 break
         else:
             printe("loadpackage: cannot find package (%s)" % (pkgpath,))
-            exit(1)
+            sys.exit(1)
 
     echo2err("loadpackage: (%s) (%s)" % (pend, pkgpath))
 
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 
     if not args:
         printe("fatal: missing shell type")
-        exit(1)
+        sys.exit(1)
 
     shell = args.pop(0)
     if shell == "sh":
@@ -351,11 +351,11 @@ if __name__ == "__main__":
         unexportvar = csh_unexportvar
     else:
         printe("fatal: bad shell type")
-        exit(1)
+        sys.exit(1)
 
     if args and args[0] in ["-h", "--help"]:
         print HELP
-        exit(0)
+        sys.exit(0)
 
     if args and args[0] == "--tmp":
         args.pop(0)
@@ -369,7 +369,7 @@ if __name__ == "__main__":
             import traceback
             traceback.print_exc()
             printe("fatal: could not create tmp file")
-            exit(1)
+            sys.exit(1)
 
     try:
         heredir = realpath(dirname(sys.argv[0]))
@@ -408,7 +408,7 @@ if __name__ == "__main__":
                 verbose = 1
             else:
                 printe("fatal: unknown argument (%s)" % (arg,))
-                exit(1)
+                sys.exit(1)
         unexportvar("SSMUSE_PENDMODE")
         deduppaths()
 
