@@ -141,6 +141,14 @@ def __exportpendpath(pend, name, path):
         val = "${%s}:%s" % (name, path)
     exportpath(name, val, path)
 
+def __exportpendmpaths(pend, name, paths):
+    """No checks.
+    """
+    if pend == "prepend":
+        paths = reversed(paths)
+    for path in paths:
+        __exportpendpath(pend, name, path)
+
 def augmentssmpath(path):
     if path.startswith("/") \
         or path.startswith("./") \
@@ -204,8 +212,8 @@ def exportpendpaths(pend, basepath):
             path = joinpath(basepath, "lib", name)
         if not islibfreedir(path):
             paths.append(path)
-    exportpendmpaths(pend, "LIBPATH", paths)
-    exportpendmpaths(pend, "LD_LIBRARY_PATH", paths)
+    __exportpendmpaths(pend, "LIBPATH", paths)
+    __exportpendmpaths(pend, "LD_LIBRARY_PATH", paths)
 
     #if os.environ.get("COMP_ARCH"):
         #comparch = os.environ.get("COMP_ARCH")
