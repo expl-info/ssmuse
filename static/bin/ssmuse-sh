@@ -13,8 +13,10 @@ function __ssmuse_sh {
 		__ssmuse.py sh "${@}"
 	else
 		tmpfile=$(__ssmuse.py sh --tmp "${@}")
-		. "${tmpfile}"
-		rm -f "${tmpfile}"
+		if [ -r "${tmpfile}" ]; then
+			. "${tmpfile}"
+			rm -f "${tmpfile}"
+		fi
 	fi
 }
 
