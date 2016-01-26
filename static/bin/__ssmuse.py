@@ -3,6 +3,13 @@
 #
 # __ssmuse.py
 
+try:
+    from cStringIO import StringIO
+except:
+    try:
+        from StringIO import StringIO
+    except:
+        from io import StringIO
 import os
 from os.path import basename, dirname, exists, isdir, realpath
 from os.path import join as joinpath
@@ -11,8 +18,6 @@ import subprocess
 import sys
 import tempfile
 import time
-
-out = sys.stdout
 
 ##
 ## csh support
@@ -320,7 +325,7 @@ Use leading - (e.g., -d) to prepend new paths, leading + to append
 new paths."""
 
 if __name__ == "__main__":
-    tmpname = None
+    usetmp = False
     verbose = 0
 
     args = sys.argv[1:]
@@ -360,19 +365,10 @@ if __name__ == "__main__":
 
     if args and args[0] == "--tmp":
         args.pop(0)
-        try:
-            fd, tmpname = tempfile.mkstemp(prefix="ssmuse", dir="/tmp")
-            out = os.fdopen(fd, "w")
-            comment("remove self/temp file")
-            execute("/bin/rm -f %s" % (tmpname,))
-            comment("")
-        except:
-            import traceback
-            traceback.print_exc()
-            printe("fatal: could not create tmp file")
-            sys.exit(1)
+        usetmp = True
 
     try:
+        out = StringIO()
         heredir = realpath(dirname(sys.argv[0]))
 
         platforms = getplatforms()
@@ -413,13 +409,31 @@ if __name__ == "__main__":
         unexportvar("SSMUSE_PENDMODE")
         deduppaths()
 
-        if tmpname:
-            print "%s" % (tmpname,)
+        # prepare to write out (to stdout or tempfile)
+        txt = out.getvalue()
+        out.close()
+
+        if not usetmp:
+            sys.stdout.write(txt)
+        else:
+            try:
+                fd, tmpname = tempfile.mkstemp(prefix="ssmuse", dir="/tmp")
+                out = os.fdopen(fd, "w")
+                comment("remove self/temp file")
+                execute("/bin/rm -f %s" % (tmpname,))
+                comment("")
+                out.write(txt)
+                print "%s" % (tmpname,)
+                out.close()
+            except:
+                import traceback
+                traceback.print_exc()
+                printe("fatal: could not create tmp file")
+                sys.exit(1)
+
     except SystemExit:
         raise
     except:
         import traceback
         #traceback.print_exc()
         printe("abort: unrecoverable error")
-        if tmpname:
-            os.remove(tmpname)
