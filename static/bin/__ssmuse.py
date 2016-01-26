@@ -3,13 +3,6 @@
 #
 # __ssmuse.py
 
-try:
-    from cStringIO import StringIO
-except:
-    try:
-        from StringIO import StringIO
-    except:
-        from io import StringIO
 import os
 from os.path import basename, dirname, exists, isdir, realpath
 from os.path import join as joinpath
@@ -19,31 +12,42 @@ import sys
 import tempfile
 import time
 
-##
-## csh support
-##
+class CodeGenerator:
 
-def csh_comment(s):
-    out.write("# %s\n" % (s,))
+    def __init__(self):
+        self.segs = []
 
-def csh_deduppath(name):
-    out.write("""
+    def __str__(self):
+        return "".join(self.segs)
+
+class CshCodeGenerator(CodeGenerator):
+    """Code generator for csh-family of shells.
+    """
+
+    def __init__(self):
+        CodeGenerator.__init__(self)
+
+    def comment(self, s):
+        self.segs.append("# %s\n" % (s,))
+
+    def deduppath(self, name):
+        self.segs.append("""
 if ( $?%s == 1 ) then
     setenv %s "`%s/__ssmuse_cleanpath.ksh ${%s}`"
 endif\n""" % (name, name, heredir, name))
 
-def csh_echo2err(s):
-    pass
+    def echo2err(self, s):
+        pass
 
-def csh_echo2out(s):
-    if version:
-        out.write("""echo "%s"\n""" % (s,))
+    def echo2out(self, s):
+        if verbose:
+            self.segs.append("""echo "%s"\n""" % (s,))
 
-def csh_execute(s):
-    out.write("%s\n" % (s,))
+    def execute(self, s):
+        self.segs.append("%s\n" % (s,))
 
-def csh_exportpath(name, val, fallback):
-    out.write("""
+    def exportpath(self, name, val, fallback):
+        self.segs.append("""
 if ( $?%s == 0 ) then
     setenv %s "%s"
 else
@@ -54,55 +58,58 @@ else
     endif
 endif\n""" % (name, name, fallback, name, name, val, name, fallback))
 
-def csh_exportvar(name, val):
-    out.write("""setenv %s "%s"\n""" % (name, val))
+    def exportvar(self, name, val):
+        self.segs.append("""setenv %s "%s"\n""" % (name, val))
 
-def csh_sourcefile(path):
-    out.write("""source "%s"\n""" % (path,))
+    def sourcefile(self, path):
+        self.segs.append("""source "%s"\n""" % (path,))
 
-def csh_unexportvar(name):
-    out.write("""unsetenv %s\n""" % (name,))
+    def unexportvar(self, name):
+        self.segs.append("""unsetenv %s\n""" % (name,))
 
-##
-## sh support
-##
+class ShCodeGenerator(CodeGenerator):
+    """Code generator for sh-family of shells.
+    """
 
-def sh_comment(s):
-    out.write("# %s\n" % (s,))
+    def __init__(self):
+        CodeGenerator.__init__(self)
 
-def sh_deduppath(name):
-    out.write("""
+    def comment(self, s):
+        self.segs.append("# %s\n" % (s,))
+
+    def deduppath(self, name):
+        self.segs.append("""
 if [ -n "${%s}" ]; then
     export %s="$(%s/__ssmuse_cleanpath.ksh ${%s})"
 fi\n""" % (name, name, heredir, name))
 
-def sh_echo2out(s):
-    if verbose:
-        out.write("""echo "%s"\n""" % (s,))
+    def echo2out(self, s):
+        if verbose:
+            self.segs.append("""echo "%s"\n""" % (s,))
 
-def sh_echo2err(s):
-    if verbose:
-        out.write("""echo "%s" 1>&2\n""" % (s,))
+    def echo2err(self, s):
+        if verbose:
+            self.segs.append("""echo "%s" 1>&2\n""" % (s,))
 
-def sh_execute(s):
-    out.write("%s\n" % (s,))
+    def execute(self, s):
+        self.segs.append("%s\n" % (s,))
 
-def sh_exportpath(name, val, fallback):
-    out.write("""
+    def exportpath(self, name, val, fallback):
+        self.segs.append("""
 if [ -n "${%s}" ]; then
     export %s="%s"
 else
     export %s="%s"
 fi\n""" % (name, name, val, name, fallback))
 
-def sh_exportvar(name, val):
-    out.write("""export %s="%s"\n""" % (name, val))
+    def exportvar(self, name, val):
+        self.segs.append("""export %s="%s"\n""" % (name, val))
 
-def sh_sourcefile(path):
-    out.write(""". "%s"\n""" % (path,))
+    def sourcefile(self, path):
+        self.segs.append(""". "%s"\n""" % (path,))
 
-def sh_unexportvar(name):
-    out.write("""unset %s\n""" % (name,))
+    def unexportvar(self, name):
+        self.segs.append("""unset %s\n""" % (name,))
 
 ##
 ##
@@ -161,7 +168,7 @@ def __exportpendpath(pend, name, path):
         val = "%s:${%s}" % (path, name)
     elif pend == "append":
         val = "${%s}:%s" % (name, path)
-    exportpath(name, val, path)
+    cg.exportpath(name, val, path)
 
 def __exportpendmpaths(pend, name, paths):
     """No checks.
@@ -172,7 +179,7 @@ def __exportpendmpaths(pend, name, paths):
             val = "%s:${%s}" % (jpaths, name)
         elif pend == "append":
             val = "${%s}:%s" % (name, jpaths)
-        exportpath(name, val, jpaths)
+        cg.exportpath(name, val, jpaths)
 
 def augmentssmpath(path):
     if path.startswith("/") \
@@ -190,9 +197,9 @@ def augmentssmpath(path):
     return path
 
 def deduppaths():
-    echo2err("deduppaths:")
+    cg.echo2err("deduppaths:")
     for name in VARS:
-        deduppath(name)
+        cg.deduppath(name)
 
 def exportpendlibpath(pend, name, path):
     if isdir(path) and not islibfreedir(path):
@@ -209,7 +216,7 @@ def exportpendpath(pend, name, path):
         __exportpendpath(pend, name, path)
 
 def exportpendpaths(pend, basepath):
-    echo2err("exportpendpaths: (%s) (%s)" % (pend, basepath))
+    cg.echo2err("exportpendpaths: (%s) (%s)" % (pend, basepath))
 
     # table-driven
     for varnames, basenames, xdirsname, testfn in VARS_SETUPTABLE:
@@ -238,13 +245,13 @@ def loaddomain(pend, dompath):
         printe("loaddomain: invalid domain (%s)" % (dompath,))
         sys.exit(1)
 
-    echo2err("loaddomain: (%s) (%s)" % (pend, dompath))
+    cg.echo2err("loaddomain: (%s) (%s)" % (pend, dompath))
 
     # load from worse to better platforms
     for platform in revplatforms:
         platpath = joinpath(dompath, platform)
         if isdir(platpath):
-            echo2err("dompath: (%s) (%s) (%s)" % (pend, dompath, platform))
+            cg.echo2err("dompath: (%s) (%s) (%s)" % (pend, dompath, platform))
             exportpendpaths(pend, platpath)
             loadprofiles(dompath, platform)
 
@@ -265,20 +272,20 @@ def loadpackage(pend, pkgpath):
             printe("loadpackage: cannot find package (%s)" % (pkgpath,))
             sys.exit(1)
 
-    echo2err("loadpackage: (%s) (%s)" % (pend, pkgpath))
+    cg.echo2err("loadpackage: (%s) (%s)" % (pend, pkgpath))
 
     if isdir(pkgpath):
         exportpendpaths(pend, pkgpath)
         path = joinpath(pkgpath, "etc/profile.d", pkgname+"."+shell)
         if exists(path):
-            sourcefile(path)
+            cg.sourcefile(path)
 
 def loaddirectory(pend, dirpath):
     if isdir(dirpath):
         exportpendpaths(pend, dirpath)
 
 def loadprofiles(dompath, platform):
-    echo2err("loadprofiles: (%s) (%s)" % (dompath, platform))
+    cg.echo2err("loadprofiles: (%s) (%s)" % (dompath, platform))
 
     root = joinpath(dompath, platform, "etc/profile.d")
     if exists(root):
@@ -287,7 +294,7 @@ def loadprofiles(dompath, platform):
         for name in names:
             path = joinpath(root, name)
             if exists(path):
-                sourcefile(path)
+                cg.sourcefile(path)
 
 def resolvepcvar(s):
     """Resolve instances of %varname% in s as environment variables.
@@ -336,25 +343,9 @@ if __name__ == "__main__":
 
     shell = args.pop(0)
     if shell == "sh":
-        comment = sh_comment
-        deduppath = sh_deduppath
-        echo2err = sh_echo2err
-        echo2out = sh_echo2out
-        execute = sh_execute
-        exportvar = sh_exportvar
-        exportpath = sh_exportpath
-        sourcefile = sh_sourcefile
-        unexportvar = sh_unexportvar
+        cg = ShCodeGenerator()
     elif shell == "csh":
-        comment = csh_comment
-        deduppath = csh_deduppath
-        echo2err = csh_echo2err
-        echo2out = csh_echo2out
-        execute = csh_execute
-        exportvar = csh_exportvar
-        exportpath = csh_exportpath
-        sourcefile = csh_sourcefile
-        unexportvar = csh_unexportvar
+        cg = CshCodeGenerator()
     else:
         printe("fatal: bad shell type")
         sys.exit(1)
@@ -368,61 +359,60 @@ if __name__ == "__main__":
         usetmp = True
 
     try:
-        out = StringIO()
         heredir = realpath(dirname(sys.argv[0]))
 
         platforms = getplatforms()
         revplatforms = platforms[::-1]
 
-        comment("host (%s)" % (socket.gethostname(),))
-        comment("date (%s)" % (time.asctime(),))
-        comment("platforms (%s)" % (" ".join(platforms),))
+        cg.comment("host (%s)" % (socket.gethostname(),))
+        cg.comment("date (%s)" % (time.asctime(),))
+        cg.comment("platforms (%s)" % (" ".join(platforms),))
 
         while args:
             arg = args.pop(0)
             if arg in ["-d", "+d"] and args:
                 pend = arg[0] == "-" and "prepend" or "append"
                 dompath = args.pop(0)
-                exportvar("SSMUSE_PENDMODE", pend)
+                cg.exportvar("SSMUSE_PENDMODE", pend)
                 loaddomain(pend, dompath)
             elif arg in ["-f", "+f"] and args:
                 pend = arg[0] == "-" and "prepend" or "append"
                 dirpath = args.pop(0)
-                unexportvar("SSMUSE_PENDMODE")
+                cg.unexportvar("SSMUSE_PENDMODE")
                 loaddirectory(pend, dirpath)
             elif arg in ["-p", "+p"] and args:
                 pend = arg[0] == "-" and "prepend" or "append"
                 pkgpath = args.pop(0)
-                exportvar("SSMUSE_PENDMODE", pend)
+                cg.exportvar("SSMUSE_PENDMODE", pend)
                 loadpackage(pend, pkgpath)
             elif arg == "--append":
                 pend = "append"
-                echo2err("pendmode: append")
+                cg.echo2err("pendmode: append")
             elif arg == "--prepend":
                 pend = "prepend"
-                echo2err("pendmode: prepend")
+                cg.echo2err("pendmode: prepend")
             elif arg == "-v":
                 verbose = 1
             else:
                 printe("fatal: unknown argument (%s)" % (arg,))
                 sys.exit(1)
-        unexportvar("SSMUSE_PENDMODE")
+        cg.unexportvar("SSMUSE_PENDMODE")
         deduppaths()
 
         # prepare to write out (to stdout or tempfile)
-        txt = out.getvalue()
-        out.close()
-
         if not usetmp:
-            sys.stdout.write(txt)
+            sys.stdout.write(str(cg))
         else:
             try:
                 fd, tmpname = tempfile.mkstemp(prefix="ssmuse", dir="/tmp")
                 out = os.fdopen(fd, "w")
-                comment("remove self/temp file")
-                execute("/bin/rm -f %s" % (tmpname,))
-                comment("")
-                out.write(txt)
+
+                # prefix code with self removal calls
+                cg.comment("remove self/temp file")
+                cg.execute("/bin/rm -f %s" % (tmpname,))
+                cg.comment("")
+                cg.segs = cg.segs[-3:]+cg.segs[:-3]
+                out.write(str(cg))
                 print "%s" % (tmpname,)
                 out.close()
             except:
