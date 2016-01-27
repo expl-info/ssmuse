@@ -187,9 +187,7 @@ def augmentssmpath(path):
         or path.startswith("../*"):
         pass
     else:
-        if "SSMUSE_DOMAIN_BASE" in os.environ:
-            key = "SSMUSE_DOMAIN_BASE"
-        elif "SSMUSE_BASE" in os.environ:
+        if "SSMUSE_BASE" in os.environ:
             key = "SSMUSE_BASE"
         else:
             key = "SSM_DOMAIN_BASE"
