@@ -1,0 +1,4 @@
+* new and old platforms are supported with new superceding
+* all compatibility files are fully specified for speed
+* processor match is preferred over OS version (e.g.,
+  aix-6.1-ppc7-64 before aix-6.2-ppc-64 on aix-6.2.ppc7-64 system)
