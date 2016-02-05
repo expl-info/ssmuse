@@ -125,6 +125,12 @@ def getplatforms():
             platforms, _ = p.communicate()
     return filter(None, platforms.split())
 
+def is_dompath(path):
+    return isdir(joinpath(path, "etc/ssm.d"))
+
+def is_pkgpath(path):
+    return exists(joinpath(path, ".ssm.d/control"))
+
 def isemptydir(path):
     if not isdir(path):
         return True
@@ -383,6 +389,14 @@ if __name__ == "__main__":
                 pkgpath = args.pop(0)
                 cg.exportvar("SSMUSE_PENDMODE", pend)
                 loadpackage(pend, pkgpath)
+            elif arg in ["-x", "+x"] and args:
+                xpath = args.pop(0)
+                if is_dompath(xpath):
+                    args = [arg[0]+"d", xpath]+args
+                elif is_pkgpath(xpath):
+                    args = [arg[0]+"p", xpath]+args
+                elif isdir(xpath):
+                    args = [arg[0]+"f", xpath]+args
             elif arg == "--append":
                 pend = "append"
                 cg.echo2err("pendmode: append")
