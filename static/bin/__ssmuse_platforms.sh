@@ -302,7 +302,7 @@ done
 
 # must be run with #! or full path
 heredir=$(readlink -f "$(dirname $0)")
-platforms_dir="${heredir}/../etc/ssm.d/platforms"
+platforms_dir="${heredir}/../etc/ssmuse/platforms"
 
 UNAME_S=`uname -s`
 UNAME_M=`uname -m`
