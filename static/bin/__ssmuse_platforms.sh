@@ -301,8 +301,9 @@ while [ $# -gt 0 ]; do
 done
 
 # must be run with #! or full path
-heredir=$(readlink -f "$(dirname $0)")
-platforms_dir="${heredir}/../etc/ssmuse/platforms"
+herefile=$(readlink -f "$0")
+bindir=$(dirname "${herefile}")
+platforms_dir=$(readlink -f "${bindir}/../etc/ssmuse/platforms")
 
 UNAME_S=`uname -s`
 UNAME_M=`uname -m`
