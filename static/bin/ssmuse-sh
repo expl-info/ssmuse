@@ -8,7 +8,6 @@ function __ssmuse_sh {
 
 	noeval=$1; shift 1
 
-	trap "[ -n \"\${tmpfile}\" ] && rm -f \"${tmpfile}\"" TERM EXIT
 	if [ "${noeval}" = "noeval" ]; then
 		__ssmuse.py sh "${@}"
 	else
