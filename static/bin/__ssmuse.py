@@ -190,7 +190,7 @@ def __exportpendmpaths(pend, name, paths):
 def augmentssmpath(path):
     if path.startswith("/") \
         or path.startswith("./") \
-        or path.startswith("../*"):
+        or path.startswith("../"):
         pass
     else:
         if "SSMUSE_BASE" in os.environ:
@@ -198,6 +198,7 @@ def augmentssmpath(path):
         else:
             key = "SSM_DOMAIN_BASE"
         path = joinpath(os.environ.get(key, ""), path)
+    path = realpath(path)
     return path
 
 def deduppaths():
