@@ -59,6 +59,9 @@ get_plat_arch() {
 		x86_64|amd64)
 			plat_arch="amd64-64"
 			;;
+		ppc|ppc64|power*)
+			plat_arch=$(get_power_plat_arch)
+			;;
 		*)
 			plat_arch="unk-unk"
 			;;
@@ -66,6 +69,27 @@ get_plat_arch() {
 		;;
 	IRIX64)
 		plat_arch=mips-64
+		;;
+	*)
+		plat_arch="unk-unk"
+		;;
+	esac
+	echo "${plat_arch}"
+}
+
+get_power_plat_arch() {
+	case "${UNAME_S}" in
+	Linux)
+		arch=$(grep -m 1 cpu /proc/cpuinfo | awk '{print tolower($3)}')
+		case "${UNAME_M}" in
+		ppc)
+			objmode=32
+			;;
+		*)
+			objmode=64
+			;;
+		esac
+		plat_arch="${arch}-${objmode}"
 		;;
 	*)
 		plat_arch="unk-unk"
