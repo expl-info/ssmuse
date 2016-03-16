@@ -1,0 +1,36 @@
+#! /bin/bash
+#
+# post-install <domain_home> <package_home>
+#
+
+domain_home=$1
+package_home=$2
+  
+# create scripts (.sh and .csh)
+cat >| "${package_home}/bin/ssmuse-boot.sh" <<EOF
+#
+# ssmuse-boot.sh (source only)
+#
+
+export PATH="${package_home}/bin:\$PATH"
+export SSMUSE_PLATFORMS=\$(__ssmuse_platforms.sh)
+
+# configure for site
+#export SSMUSE_BASE=/fs/ssm
+if [ -z "\${SSMUSE_BASE}" ]; then
+	echo "warning: SSMUSE_BASE is not set" 1>&2
+fi
+EOF
+ 
+cat >| "${package_home}/bin/ssmuse-boot.csh" <<EOF
+#
+# ssmuse-boot.csh (source only)
+#
+
+setenv PATH "${package_home}/bin:\$PATH"
+setenv SSMUSE_PLATFORMS \`__ssmuse_platforms.sh\`
+
+# configure for site
+#setenv SSMUSE_BASE /fs/ssm
+sh -c '[ -z "${SSMUSE_BASE}" ] && echo "warning: SSMUSE_BASE is not set" 1>&2'
+EOF
