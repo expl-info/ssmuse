@@ -391,7 +391,7 @@ if __name__ == "__main__":
                 cg.exportvar("SSMUSE_PENDMODE", pend)
                 loadpackage(pend, pkgpath)
             elif arg in ["-x", "+x"] and args:
-                xpath = args.pop(0)
+                xpath = augmentssmpath(args.pop(0))
                 if is_dompath(xpath):
                     args = [arg[0]+"d", xpath]+args
                 elif is_pkgpath(xpath):
