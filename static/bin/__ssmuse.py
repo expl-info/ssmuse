@@ -1,5 +1,4 @@
-#! /usr/bin/python
-#! /tmp/jpython
+#! /usr/bin/env python
 #
 # __ssmuse.py
 
