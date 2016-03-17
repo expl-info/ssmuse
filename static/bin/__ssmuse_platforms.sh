@@ -38,6 +38,7 @@ get_plat_arch() {
 
 	case "${UNAME_S}" in
 	AIX)
+		# warning: the following should have been power5- and power7-
 		case "`lsattr -El proc0 -a type | cut -f2 -d' '`" in
 		PowerPC_POWER7)
 			plat_arch="ppc7-64"
