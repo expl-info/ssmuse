@@ -32,7 +32,7 @@ class CshCodeGenerator(CodeGenerator):
     def deduppath(self, name):
         self.segs.append("""
 if ( $?%s == 1 ) then
-    setenv %s "`%s/__ssmuse_cleanpath.ksh ${%s}`"
+    setenv %s "`%s/ssmuse_cleanpath ${%s}`"
 endif\n""" % (name, name, heredir, name))
 
     def echo2err(self, s):
@@ -79,7 +79,7 @@ class ShCodeGenerator(CodeGenerator):
     def deduppath(self, name):
         self.segs.append("""
 if [ -n "${%s}" ]; then
-    export %s="$(%s/__ssmuse_cleanpath.ksh ${%s})"
+    export %s="$(%s/ssmuse_cleanpath ${%s})"
 fi\n""" % (name, name, heredir, name))
 
     def echo2out(self, s):
@@ -120,7 +120,7 @@ def getplatforms():
         if exists("/etc/ssm/platforms"):
             platforms = open("/etc/ssm/platforms").read()
         else:
-            p = subprocess.Popen(joinpath(heredir, "__ssmuse_platforms.sh"), stdout=subprocess.PIPE)
+            p = subprocess.Popen(joinpath(heredir, "ssmuse_platforms"), stdout=subprocess.PIPE)
             platforms, _ = p.communicate()
     return filter(None, platforms.split())
 

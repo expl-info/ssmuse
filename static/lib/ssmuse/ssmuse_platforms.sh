@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# __ssmuse_platforms.sh
+# ssmuse_platforms.sh
 #
 # Uniquely identify the current platform(s) as a
 # combination of OS, OS (kernel) release/version,
@@ -327,8 +327,8 @@ done
 
 # must be run with #! or full path
 herefile=$(readlink -f "$0")
-bindir=$(dirname "${herefile}")
-platforms_dir=$(readlink -f "${bindir}/../etc/ssmuse/platforms")
+heredir=$(dirname "${herefile}")
+platforms_dir=$(readlink -f "${heredir}/../../etc/ssmuse/platforms")
 
 UNAME_S=`uname -s`
 UNAME_M=`uname -m`

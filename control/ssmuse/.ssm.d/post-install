@@ -13,7 +13,7 @@ cat >| "${package_home}/bin/ssmuse-boot.sh" <<EOF
 #
 
 export PATH="${package_home}/bin:\$PATH"
-export SSMUSE_PLATFORMS=\$(__ssmuse_platforms.sh)
+export SSMUSE_PLATFORMS=\$(ssmuse_platforms)
 
 # configure for site
 #export SSMUSE_BASE=/fs/ssm
@@ -28,7 +28,7 @@ cat >| "${package_home}/bin/ssmuse-boot.csh" <<EOF
 #
 
 setenv PATH "${package_home}/bin:\$PATH"
-setenv SSMUSE_PLATFORMS \`__ssmuse_platforms.sh\`
+setenv SSMUSE_PLATFORMS \`ssmuse_platforms\`
 
 # configure for site
 #setenv SSMUSE_BASE /fs/ssm

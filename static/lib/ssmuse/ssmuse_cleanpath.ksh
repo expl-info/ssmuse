@@ -1,6 +1,6 @@
 #! /bin/ksh93
 #
-# __ssmuse_cleanpath.ksh
+# ssmuse_cleanpath.ksh
 
 if [ -z "${KSH_VERSION}" ]; then
 	echo "$1"

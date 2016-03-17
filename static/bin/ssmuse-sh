@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# __ssmuse-sh
+# ssmuse-sh
 
 function __ssmuse_sh {
 	typeset noeval
@@ -9,9 +9,9 @@ function __ssmuse_sh {
 	noeval=$1; shift 1
 
 	if [ "${noeval}" = "noeval" ]; then
-		__ssmuse.py sh "${@}"
+		__ssmuse sh "${@}"
 	else
-		tmpfile=$(__ssmuse.py sh --tmp "${@}")
+		tmpfile=$(__ssmuse sh --tmp "${@}")
 		if [ -r "${tmpfile}" ]; then
 			. "${tmpfile}"
 			rm -f "${tmpfile}"
