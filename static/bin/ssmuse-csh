@@ -12,7 +12,7 @@ if ( ${#argv} > 0 ) then
 		shift
 		__ssmuse.py csh $*
 	else
-		__ssmuse_tmpfile=`__ssmuse.py csh --tmp $*`
+		set __ssmuse_tmpfile=`__ssmuse.py csh --tmp $*`
 		if ( -r "${__ssmuse_tmpfile}" ) then
 			source ${__ssmuse_tmpfile}
 			/bin/rm -f ${__ssmuse_tmpfile}
