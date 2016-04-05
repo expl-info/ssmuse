@@ -300,9 +300,11 @@ get_compatible_platforms() {
 print_usage() {
 	PROG_NAME=$(basename $0)
 	echo "\
-usage: ${PROG_NAME}
+usage: ${PROG_NAME} [<primary_platform>]
 
-Determine the SSM platforms (primary and compatible) for the host."
+Determine the SSM platforms (primary and compatible) for the host.
+If <primay_platform> is given, then use it instead of automatically
+sensing it from the host."
 }
 
 #
@@ -312,27 +314,36 @@ Determine the SSM platforms (primary and compatible) for the host."
 NEWLINE='
 '
 
-while [ $# -gt 0 ]; do
+if [ $# -eq 1 ]; then
 	case ${1} in
 	-h|--help)
 		print_usage
 		exit 0
 		;;
-	*)
+	-*)
 		echo "error: bad/missing argument" 1>&2
 		exit 1
 		;;
+	*)
+		platform=$1; shift 1
+		;;
 	esac
-done
+elif [ $# -gt 1 ]; then
+	echo "error: bad/missing argument" 1>&2
+	exit 1
+fi
 
 # must be run with #! or full path
 herefile=$(readlink -f "$0")
 heredir=$(dirname "${herefile}")
 platforms_dir=$(readlink -f "${heredir}/../../etc/ssmuse/platforms")
 
-UNAME_S=`uname -s`
-UNAME_M=`uname -m`
-UNAME_R=`uname -r`
+if [ -z "${platform}" ]; then
+	UNAME_S=`uname -s`
+	UNAME_M=`uname -m`
+	UNAME_R=`uname -r`
 
-platform=`get_base_platform`
+	platform=`get_base_platform`
+fi
+
 get_compatible_platforms "${platform}"
