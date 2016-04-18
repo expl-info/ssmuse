@@ -391,10 +391,10 @@ if __name__ == "__main__":
                 loadpackage(pend, pkgpath)
             elif arg in ["-x", "+x"] and args:
                 xpath = augmentssmpath(args.pop(0))
-                if is_dompath(xpath):
-                    args = [arg[0]+"d", xpath]+args
-                elif is_pkgpath(xpath):
+                if is_pkgpath(xpath):
                     args = [arg[0]+"p", xpath]+args
+                elif is_dompath(xpath):
+                    args = [arg[0]+"d", xpath]+args
                 elif isdir(xpath):
                     args = [arg[0]+"f", xpath]+args
             elif arg == "--append":
