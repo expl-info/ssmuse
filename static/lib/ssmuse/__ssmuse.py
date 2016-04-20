@@ -428,14 +428,14 @@ if __name__ == "__main__":
                 print "%s" % (tmpname,)
                 out.close()
             except:
-                import traceback
-                traceback.print_exc()
+                #import traceback
+                #traceback.print_exc()
                 printe("fatal: could not create tmp file")
                 sys.exit(1)
 
     except SystemExit:
         raise
     except:
-        import traceback
+        #import traceback
         #traceback.print_exc()
         printe("abort: unrecoverable error")
