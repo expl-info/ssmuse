@@ -243,6 +243,7 @@ def exportpendpaths(pend, basepath):
             __exportpendmpaths(pend, varname, paths)
 
 def loaddomain(pend, dompath):
+    _dompath = dompath
     dompath = augmentssmpath(dompath)
 
     if not isdir(dompath):
@@ -260,6 +261,7 @@ def loaddomain(pend, dompath):
             loadprofiles(dompath, platform)
 
 def loadpackage(pend, pkgpath):
+    _pkgpath = pkgpath
     pkgpath = augmentssmpath(pkgpath)
 
     pkgname = basename(pkgpath)
@@ -285,6 +287,9 @@ def loadpackage(pend, pkgpath):
             cg.sourcefile(path)
 
 def loaddirectory(pend, dirpath):
+    _dirpath = dirpath
+    dirpath = realpath(dirpath)
+
     if isdir(dirpath):
         exportpendpaths(pend, dirpath)
 
@@ -390,13 +395,14 @@ if __name__ == "__main__":
                 cg.exportvar("SSMUSE_PENDMODE", pend)
                 loadpackage(pend, pkgpath)
             elif arg in ["-x", "+x"] and args:
-                xpath = augmentssmpath(args.pop(0))
+                _xpath = args.pop(0)
+                xpath = augmentssmpath(_xpath)
                 if is_pkgpath(xpath):
-                    args = [arg[0]+"p", xpath]+args
+                    args = [arg[0]+"p", _xpath]+args
                 elif is_dompath(xpath):
-                    args = [arg[0]+"d", xpath]+args
+                    args = [arg[0]+"d", _xpath]+args
                 elif isdir(xpath):
-                    args = [arg[0]+"f", xpath]+args
+                    args = [arg[0]+"f", _xpath]+args
             elif arg == "--append":
                 pend = "append"
                 cg.echo2err("pendmode: append")
