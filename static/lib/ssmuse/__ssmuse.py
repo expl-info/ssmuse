@@ -253,12 +253,19 @@ def loaddomain(pend, dompath):
     cg.echo2err("loaddomain: (%s) (%s)" % (pend, dompath))
 
     # load from worse to better platforms
+    loadedplatforms = []
     for platform in revplatforms:
         platpath = joinpath(dompath, platform)
         if isdir(platpath):
             cg.echo2err("dompath: (%s) (%s) (%s)" % (pend, dompath, platform))
             exportpendpaths(pend, platpath)
             loadprofiles(dompath, platform)
+            loadedplatforms.append(platform)
+    if logger:
+        log(dompath, "%s|loaddomain|%s|%s|%s|%s|%s|%s|%s|%s|%s" \
+            % (nowst, os.environ.get("LOGNAME"), hostname, platform0,
+                len(loadedplatforms), " ".join(loadedplatforms),
+                shell, pend, _dompath, dompath))
 
 def loadpackage(pend, pkgpath):
     _pkgpath = pkgpath
@@ -285,6 +292,10 @@ def loadpackage(pend, pkgpath):
         path = joinpath(pkgpath, "etc/profile.d", pkgname+"."+shell)
         if exists(path):
             cg.sourcefile(path)
+        if logger:
+            log(pkgpath, "%s|loadpackage|%s|%s|%s|%s|%s|%s|%s" \
+                % (nowst, os.environ.get("LOGNAME"), hostname,
+                    platform0, shell, pend, _pkgpath, pkgpath))
 
 def loaddirectory(pend, dirpath):
     _dirpath = dirpath
@@ -292,6 +303,10 @@ def loaddirectory(pend, dirpath):
 
     if isdir(dirpath):
         exportpendpaths(pend, dirpath)
+        if logger:
+            log(dirpath, "%s|loaddirectory|%s|%s|%s|%s|%s|%s|%s" \
+                % (nowst, os.environ.get("LOGNAME"), hostname,
+                    platform0, shell, pend, _dirpath, dirpath))
 
 def loadprofiles(dompath, platform):
     cg.echo2err("loadprofiles: (%s) (%s)" % (dompath, platform))
@@ -305,6 +320,16 @@ def loadprofiles(dompath, platform):
             if exists(path):
                 cg.sourcefile(path)
 
+def log(path, message):
+    if logger:
+        if logpathprefixes:
+            for pref in logpathprefixes:
+                if path.startswith(pref):
+                    break
+            else:
+                return
+        logger.info(message)
+
 def resolvepcvar(s):
     """Resolve instances of %varname% in s as environment variables.
     """
@@ -316,6 +341,55 @@ def resolvepcvar(s):
         v = os.environ.get(l[i], "%%%s%%" % l[i])
         l2.extend([v, l[i+1]])
     return "".join(l2)
+
+def setuplogger():
+    global logger, logpathprefixes
+
+    # set up optional logger
+    if "SSMUSE_LOG" in os.environ:
+        try:
+            import logging
+
+            logmethod, rest = os.environ["SSMUSE_LOG"].split(":", 1)
+            if logmethod == "file":
+                path = os.path.expanduser("~/.ssmuse/log")
+                lh = logging.FileHandler(path)
+            elif logmethod == "syslog":
+                import logging.handlers
+                lh = logging.handlers.SysLogHandler()
+            elif logmethod == "russlog":
+                import logging
+                sys.path.insert(0, "/usr/lib/python")
+                import pyruss
+
+                class RusslogHandler(logging.Handler):
+                    """
+                    """
+                    def __init__(self, spath):
+                        logging.Handler.__init__(self)
+                        self.spath = spath
+                        self.addspath = "%s/add" % (spath,)
+
+                    def emit(self, record):
+                        message = self.format(record)
+                        rv, ev = pyruss.dialv_wait(pyruss.to_deadline(1000), "execute", self.addspath, args=[message])
+
+                spath = rest
+                lh = RusslogHandler(spath)
+            else:
+                raise Exception()
+            logger = logging.getLogger("ssmuse")
+            logger.setLevel(logging.INFO)
+            lh.setFormatter(logging.Formatter("%(message)s"))
+            logger.addHandler(lh)
+
+            if "SSMUSE_LOG_FILTER" in os.environ:
+                logpathprefixes = map(realpath, os.environ["SSMUSE_LOG_FILTER"].split(":"))
+        except:
+            sys.stderr.write("warning: no logging\n")
+            #import traceback
+            #traceback.print_exc()
+            logger = None
 
 HELP = """\
 usage: ssmuse-sh [options]
@@ -341,6 +415,11 @@ Use leading - (e.g., -d) to prepend new paths, leading + to append
 new paths."""
 
 if __name__ == "__main__":
+    hostname = socket.gethostname()
+    logger = None
+    logpathprefixes = []
+    nowst = time.strftime("%Y/%m/%dT%H:%M:%S", time.gmtime())
+    platform0 = None
     usetmp = False
     verbose = 0
 
@@ -367,10 +446,13 @@ if __name__ == "__main__":
         args.pop(0)
         usetmp = True
 
+    setuplogger()
+
     try:
         heredir = realpath(dirname(sys.argv[0]))
 
         platforms = getplatforms()
+        platform0 = platforms and platforms[0] or None
         revplatforms = platforms[::-1]
 
         cg.comment("host (%s)" % (socket.gethostname(),))
