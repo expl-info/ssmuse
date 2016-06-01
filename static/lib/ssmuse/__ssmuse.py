@@ -186,19 +186,41 @@ def __exportpendmpaths(pend, name, paths):
             val = "${%s}:%s" % (name, jpaths)
         cg.exportpath(name, val, jpaths)
 
-def augmentssmpath(path):
+def augmentssmpath(pathtype, path):
     if path.startswith("/") \
         or path.startswith("./") \
         or path.startswith("../"):
         pass
     else:
         if "SSMUSE_BASE" in os.environ:
-            key = "SSMUSE_BASE"
+            basedir = os.environ["SSMUSE_BASE"]
         else:
-            key = "SSM_DOMAIN_BASE"
-        path = joinpath(os.environ.get(key, ""), path)
+            basedir = os.environ.get("SSM_DOMAIN_BASE", "")
+        path = os.path.join(basedir, path)
+
     path = realpath(path)
-    return path
+    if pathtype == None:
+        pkgpath = matchpkgpath(path)
+        if pkgpath != None:
+            pathtype = "package"
+        elif is_dompath(path):
+            pathtype = "domain"
+        elif isdir(path):
+            pathtype = "directory"
+        else:
+            path = None
+    elif pathtype == "domain" and not is_dompath(path):
+        path = None
+    elif pathtype == "package":
+        pkgpath = matchpkgpath(path)
+        if pkgpath != None:
+            path = pkgpath
+        else:
+            path = None
+    elif not exists(path):
+        path = None
+
+    return pathtype, path
 
 def deduppaths():
     cg.echo2err("deduppaths:")
@@ -242,11 +264,24 @@ def exportpendpaths(pend, basepath):
         for varname in varnames:
             __exportpendmpaths(pend, varname, paths)
 
+def matchpkgpath(pkgpath):
+    pkgname = basename(pkgpath)
+    t = pkgname.split("_")
+    if len(t) == 2:
+        pkgdir = dirname(pkgpath)
+        # check better platforms first
+        for platform in platforms:
+            path = joinpath(pkgdir, pkgname+"_"+platform)
+            if is_pkgpath(path):
+                return path
+    elif is_pkgpath(pkgpath):
+        return pkgpath
+    return None
+
 def loaddomain(pend, dompath):
     _dompath = dompath
-    dompath = augmentssmpath(dompath)
 
-    if not isdir(dompath):
+    if dompath == None or not isdir(dompath):
         printe("loaddomain: invalid domain (%s)" % (dompath,))
         sys.exit(1)
 
@@ -269,44 +304,35 @@ def loaddomain(pend, dompath):
 
 def loadpackage(pend, pkgpath):
     _pkgpath = pkgpath
-    pkgpath = augmentssmpath(pkgpath)
 
-    pkgname = basename(pkgpath)
-    t = pkgname.split("_")
-    if len(t) == 2:
-        pkgdir = dirname(pkgpath)
-        # check better platforms first
-        for platform in platforms:
-            path = joinpath(pkgdir, pkgname+"_"+platform)
-            if exists(path):
-                pkgpath = path
-                break
-        else:
-            printe("loadpackage: cannot find package (%s)" % (pkgpath,))
-            sys.exit(1)
+    if pkgpath == None or not isdir(pkgpath):
+        printe("loadpackage: invalid package (%s)" % (pkgpath,))
+        sys.exit(1)
 
     cg.echo2err("loadpackage: (%s) (%s)" % (pend, pkgpath))
 
-    if isdir(pkgpath):
-        exportpendpaths(pend, pkgpath)
-        path = joinpath(pkgpath, "etc/profile.d", pkgname+"."+shell)
-        if exists(path):
-            cg.sourcefile(path)
-        if logger:
-            log(pkgpath, "%s|loadpackage|%s|%s|%s|%s|%s|%s|%s" \
-                % (nowst, os.environ.get("LOGNAME"), hostname,
-                    platform0, shell, pend, _pkgpath, pkgpath))
+    pkgname = os.path.basename(pkgpath)
+    exportpendpaths(pend, pkgpath)
+    path = joinpath(pkgpath, "etc/profile.d", pkgname+"."+shell)
+    if exists(path):
+        cg.sourcefile(path)
+    if logger:
+        log(pkgpath, "%s|loadpackage|%s|%s|%s|%s|%s|%s|%s" \
+            % (nowst, os.environ.get("LOGNAME"), hostname,
+                platform0, shell, pend, _pkgpath, pkgpath))
 
 def loaddirectory(pend, dirpath):
     _dirpath = dirpath
-    dirpath = realpath(dirpath)
 
-    if isdir(dirpath):
-        exportpendpaths(pend, dirpath)
-        if logger:
-            log(dirpath, "%s|loaddirectory|%s|%s|%s|%s|%s|%s|%s" \
-                % (nowst, os.environ.get("LOGNAME"), hostname,
-                    platform0, shell, pend, _dirpath, dirpath))
+    if dirpath == None or not isdir(dirpath):
+        printe("loaddirectory: invalid directory (%s)" % (dirpath,))
+        sys.exit(1)
+
+    exportpendpaths(pend, dirpath)
+    if logger:
+        log(dirpath, "%s|loaddirectory|%s|%s|%s|%s|%s|%s|%s" \
+            % (nowst, os.environ.get("LOGNAME"), hostname,
+                platform0, shell, pend, _dirpath, dirpath))
 
 def loadprofiles(dompath, platform):
     cg.echo2err("loadprofiles: (%s) (%s)" % (dompath, platform))
@@ -463,28 +489,31 @@ if __name__ == "__main__":
             arg = args.pop(0)
             if arg in ["-d", "+d"] and args:
                 pend = arg[0] == "-" and "prepend" or "append"
-                dompath = args.pop(0)
+                _dompath = args.pop(0)
                 cg.exportvar("SSMUSE_PENDMODE", pend)
+                _, dompath = augmentssmpath("domain", _dompath)
                 loaddomain(pend, dompath)
             elif arg in ["-f", "+f"] and args:
                 pend = arg[0] == "-" and "prepend" or "append"
-                dirpath = args.pop(0)
+                _dirpath = args.pop(0)
                 cg.unexportvar("SSMUSE_PENDMODE")
+                _, dirpath = augmentssmpath("directory", _dirpath)
                 loaddirectory(pend, dirpath)
             elif arg in ["-p", "+p"] and args:
                 pend = arg[0] == "-" and "prepend" or "append"
-                pkgpath = args.pop(0)
+                _pkgpath = args.pop(0)
                 cg.exportvar("SSMUSE_PENDMODE", pend)
+                _, pkgpath = augmentssmpath("package", _pkgpath)
                 loadpackage(pend, pkgpath)
             elif arg in ["-x", "+x"] and args:
                 _xpath = args.pop(0)
-                xpath = augmentssmpath(_xpath)
-                if is_pkgpath(xpath):
-                    args = [arg[0]+"p", _xpath]+args
-                elif is_dompath(xpath):
-                    args = [arg[0]+"d", _xpath]+args
-                elif isdir(xpath):
+                pathtype, xpath = augmentssmpath(None, _xpath)
+                if pathtype == "directory":
                     args = [arg[0]+"f", _xpath]+args
+                elif pathtype == "domain":
+                    args = [arg[0]+"d", _xpath]+args
+                elif pathtype == "package":
+                    args = [arg[0]+"p", _xpath]+args
             elif arg == "--append":
                 pend = "append"
                 cg.echo2err("pendmode: append")
