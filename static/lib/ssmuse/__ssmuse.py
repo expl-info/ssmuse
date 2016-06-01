@@ -190,36 +190,39 @@ def augmentssmpath(pathtype, path):
     if path.startswith("/") \
         or path.startswith("./") \
         or path.startswith("../"):
-        pass
+        paths = [path]
     else:
         if "SSMUSE_BASE" in os.environ:
-            basedir = os.environ["SSMUSE_BASE"]
+            basedirs = os.environ["SSMUSE_BASE"].split(":")
         else:
-            basedir = os.environ.get("SSM_DOMAIN_BASE", "")
-        path = os.path.join(basedir, path)
+            basedirs = os.environ.get("SSM_DOMAIN_BASE", "").split(":")
+        paths = [os.path.join(basedir, path) for basedir in basedirs]
 
-    path = realpath(path)
-    if pathtype == None:
-        pkgpath = matchpkgpath(path)
-        if pkgpath != None:
-            pathtype = "package"
-        elif is_dompath(path):
-            pathtype = "domain"
-        elif isdir(path):
-            pathtype = "directory"
-        else:
+    for path in paths:
+        path = realpath(path)
+        if pathtype == None:
+            pkgpath = matchpkgpath(path)
+            if pkgpath != None:
+                pathtype = "package"
+            elif is_dompath(path):
+                pathtype = "domain"
+            elif isdir(path):
+                pathtype = "directory"
+            else:
+                path = None
+        elif pathtype == "domain" and not is_dompath(path):
             path = None
-    elif pathtype == "domain" and not is_dompath(path):
-        path = None
-    elif pathtype == "package":
-        pkgpath = matchpkgpath(path)
-        if pkgpath != None:
-            path = pkgpath
-        else:
+        elif pathtype == "package":
+            pkgpath = matchpkgpath(path)
+            if pkgpath != None:
+                path = pkgpath
+            else:
+                path = None
+        elif not exists(path):
             path = None
-    elif not exists(path):
-        path = None
 
+        if path != None:
+            break
     return pathtype, path
 
 def deduppaths():
