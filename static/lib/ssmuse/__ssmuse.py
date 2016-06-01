@@ -491,6 +491,10 @@ if __name__ == "__main__":
         cg.comment("host (%s)" % (socket.gethostname(),))
         cg.comment("date (%s)" % (time.asctime(),))
         cg.comment("platforms (%s)" % (" ".join(platforms),))
+        for name in ["SSMUSE_BASE", "SSMUSE_LOG", "SSMUSE_PATH",
+            "SSMUSE_PLATFORMS", "SSMUSE_XINCDIRS", "SSMUSE_XLIBDIRS"]:
+            value = os.environ.get(name, "-").replace("\n\t", "  ")
+            cg.comment("env (%s) (%s)" % (name, value))
 
         while args:
             arg = args.pop(0)
