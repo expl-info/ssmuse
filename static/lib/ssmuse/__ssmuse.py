@@ -192,10 +192,14 @@ def augmentssmpath(pathtype, path):
         or path.startswith("../"):
         paths = [path]
     else:
-        if "SSMUSE_BASE" in os.environ:
-            basedirs = os.environ["SSMUSE_BASE"].split(":")
+        if "SSMUSE_PATH" in os.environ:
+            basedirs = os.environ["SSMUSE_PATH"].split(":")
+        elif "SSMUSE_BASE" in os.environ:
+            basedirs = [os.environ["SSMUSE_BASE"]]
+        elif "SSM_DOMAIN_BASE" in os.environ:
+            basedirs = [os.environ["SSM_DOMAIN_BASE"]]
         else:
-            basedirs = os.environ.get("SSM_DOMAIN_BASE", "").split(":")
+            basedirs = []
         paths = [os.path.join(basedir, path) for basedir in basedirs]
 
     for path in paths:
