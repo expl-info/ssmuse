@@ -454,7 +454,7 @@ if __name__ == "__main__":
     nowst = time.strftime("%Y/%m/%dT%H:%M:%S", time.gmtime())
     platform0 = None
     usetmp = False
-    verbose = 0
+    verbose = os.environ.get("SSMUSE_VERBOSE")
 
     args = sys.argv[1:]
 
@@ -532,7 +532,7 @@ if __name__ == "__main__":
                 pend = "prepend"
                 cg.echo2err("pendmode: prepend")
             elif arg == "-v":
-                verbose = 1
+                verbose = True
             else:
                 printe("fatal: unknown argument (%s)" % (arg,))
                 sys.exit(1)
