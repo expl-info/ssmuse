@@ -30,6 +30,21 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # GPL--end
 
+get_major_minor() {
+	local a b c
+
+	a=$1
+	b="${a#*.}"
+	a="${a%%.*}"
+	c="${b#*.}"
+	if [ "${a}" == "${b}" ]; then
+		echo "${a}"
+	else
+		b="${b%%.*}"
+		echo "${a}.${b}"
+	fi
+}
+
 get_plat_arch() {
 	local plat_dist plat_ver plat_arch
 
@@ -104,6 +119,7 @@ aix_platform() {
 
 	plat_dist="aix"
 	plat_ver="`uname -v`.`uname -r`"
+	plat_ver=$(get_major_minor "${plat_ver}")
 	plat_arch=`get_plat_arch ${plat_dist} ${plat_ver}`
 	echo "${plat_dist}-${plat_ver}-${plat_arch}"
 }
@@ -114,6 +130,7 @@ freebsd_platform() {
 	plat_dist="freebsd"
 	plat_ver="`uname -r`"
 	plat_ver=${plat_ver%%-*}
+	plat_ver=$(get_major_minor "${plat_ver}")
 	plat_arch=`get_plat_arch ${plat_dist} ${plat_ver}`
 	echo "${plat_dist}-${plat_ver}-${plat_arch}"
 }
@@ -137,10 +154,10 @@ linux_platform_lsb() {
 			;;
 		DISTRIB_RELEASE)
 			plat_ver=${line#*=}
-			#plat_ver=${plat_ver%*.*} # major and minor only
 			;;
 		esac
 	done
+	plat_ver=$(get_major_minor "${plat_ver}")
 	plat_arch=`get_plat_arch ${plat_dist} ${plat_ver}`
 	
 	echo "${plat_dist}-${plat_ver}-${plat_arch}" | tr '[A-Z]' '[a-z]'
@@ -151,7 +168,7 @@ linux_platform_debian() {
 
 	plat_dist="debian"
 	plat_ver=`cat /etc/debian_version`
-	#plat_ver=${plat_ver%*.*} # major and minor only
+	plat_ver=$(get_major_minor "${plat_ver}")
 	plat_arch=`get_plat_arch ${plat_dist} ${plat_ver}`
 
 	echo "${plat_dist}-${plat_ver}-${plat_arch}" | tr '[A-Z]' '[a-z]'
@@ -165,7 +182,8 @@ linux_platform_redhat() {
 	line=`cat /etc/redhat-release`
 	plat_dist="rhel"
 	plat_ver=${line#*release }
-	plat_ver=${plat_ver% *}
+	plat_ver="${plat_ver% *}"
+	plat_ver=$(get_major_minor "${plat_ver}")
 	plat_arch=`get_plat_arch ${plat_dist} ${plat_ver}`
 
 	echo "${plat_dist}-${plat_ver}-${plat_arch}"
@@ -186,6 +204,7 @@ linux_platform_suse() {
 		plat_dist="suse-unk"
 	fi
 	plat_ver="${lines[1]#*= }"
+	plat_ver=$(get_major_minor "${plat_ver}")
 	plat_arch=`get_plat_arch ${plat_dist} ${plat_ver}`
 
 	echo "${plat_dist}-${plat_ver}-${plat_arch}"
