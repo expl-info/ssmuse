@@ -63,6 +63,18 @@ endif\n""" % (name, name, fallback, name, name, val, name, fallback))
     def sourcefile(self, path):
         self.segs.append("""source "%s"\n""" % (path,))
 
+    def ssmuseonchangeddeps(self, args):
+        if args:
+            names = ["${%s}" % name for name in depnames]
+            values = [os.environ.get(name, "") for name in depnames]
+            quotedargs = ["'%s'" % arg for arg in args]
+            self.segs.append("""
+if ( "%s" != '%s' ) then
+    source %s %s %s
+    return
+fi
+""" % ("::".join(names), "::".join(values), "ssmuse-sh", verbose and "-v" or "", " ".join(quotedargs)))
+
     def unexportvar(self, name):
         self.segs.append("""unsetenv %s\n""" % (name,))
 
@@ -106,6 +118,18 @@ fi\n""" % (name, name, val, name, fallback))
 
     def sourcefile(self, path):
         self.segs.append(""". "%s"\n""" % (path,))
+
+    def ssmuseonchangeddeps(self, args):
+        if args:
+            names = ["${%s}" % name for name in depnames]
+            values = [os.environ.get(name, "") for name in depnames]
+            quotedargs = ["'%s'" % arg for arg in args]
+            self.segs.append("""
+if [ "%s" != '%s' ]; then
+    . %s %s %s
+    return
+fi
+""" % ("::".join(names), "::".join(values), "ssmuse-sh", verbose and "-v" or "", " ".join(quotedargs)))
 
     def unexportvar(self, name):
         self.segs.append("""unset %s\n""" % (name,))
@@ -270,6 +294,20 @@ def exportpendpaths(pend, basepath):
                     paths.append(path)
         for varname in varnames:
             __exportpendmpaths(pend, varname, paths)
+
+def getdepnames():
+    depnames = []
+    for _, _, xdirsname, _ in VARS_SETUPTABLE:
+        if xdirsname:
+            depnames.append(xdirsname)
+            for name in xdirsname.split(":"):
+                path = os.environ.get(name)
+                if path:
+                    l = path.split("%")
+                    if len(l) % 2 == 1:
+                        names = l[1::2]
+                        depnames.extend(names)
+    return set(depnames)
 
 def matchpkgpath(pkgpath):
     pkgname = basename(pkgpath)
@@ -488,9 +526,12 @@ if __name__ == "__main__":
         platform0 = platforms and platforms[0] or None
         revplatforms = platforms[::-1]
 
+        depnames = getdepnames()
+
         cg.comment("host (%s)" % (socket.gethostname(),))
         cg.comment("date (%s)" % (time.asctime(),))
         cg.comment("platforms (%s)" % (" ".join(platforms),))
+        cg.comment("depnames (%s)" % (" ".join(depnames),))
         for name in ["SSMUSE_BASE", "SSMUSE_LOG", "SSMUSE_PATH",
             "SSMUSE_PLATFORMS", "SSMUSE_XINCDIRS", "SSMUSE_XLIBDIRS"]:
             value = os.environ.get(name, "-").replace("\n\t", "  ")
@@ -504,6 +545,7 @@ if __name__ == "__main__":
                 cg.exportvar("SSMUSE_PENDMODE", pend)
                 _, dompath = augmentssmpath("domain", _dompath)
                 loaddomain(pend, dompath)
+                cg.ssmuseonchangeddeps(args)
             elif arg in ["-f", "+f"] and args:
                 pend = arg[0] == "-" and "prepend" or "append"
                 _dirpath = args.pop(0)
@@ -516,6 +558,7 @@ if __name__ == "__main__":
                 cg.exportvar("SSMUSE_PENDMODE", pend)
                 _, pkgpath = augmentssmpath("package", _pkgpath)
                 loadpackage(pend, pkgpath)
+                cg.ssmuseonchangeddeps(args)
             elif arg in ["-x", "+x"] and args:
                 _xpath = args.pop(0)
                 pathtype, xpath = augmentssmpath(None, _xpath)
