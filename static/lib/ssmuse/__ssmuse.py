@@ -40,7 +40,7 @@ endif\n""" % (name, name, heredir, name))
 
     def echo2out(self, s):
         if verbose:
-            self.segs.append("""echo "%s"\n""" % (s,))
+            self.segs.append("""echo "[%s] %s"\n""" % (selfpid, s))
 
     def execute(self, s):
         self.segs.append("%s\n" % (s,))
@@ -96,11 +96,11 @@ fi\n""" % (name, name, heredir, name))
 
     def echo2out(self, s):
         if verbose:
-            self.segs.append("""echo "%s"\n""" % (s,))
+            self.segs.append("""echo "[%s] %s"\n""" % (selfpid, s))
 
     def echo2err(self, s):
         if verbose:
-            self.segs.append("""echo "%s" 1>&2\n""" % (s,))
+            self.segs.append("""echo "[%s] %s" 1>&2\n""" % (selfpid, s))
 
     def execute(self, s):
         self.segs.append("%s\n" % (s,))
@@ -491,6 +491,7 @@ if __name__ == "__main__":
     logpathprefixes = []
     nowst = time.strftime("%Y/%m/%dT%H:%M:%S", time.gmtime())
     platform0 = None
+    selfpid = os.getpid()
     usetmp = False
     verbose = os.environ.get("SSMUSE_VERBOSE")
 
