@@ -19,6 +19,10 @@ class CodeGenerator:
     def __str__(self):
         return "".join(self.segs)
 
+    def log(self, mtype, text):
+        if verbose:
+            self.echo2err("[%s] [%s] %s" % (selfpid, mtype, text))
+
 class CshCodeGenerator(CodeGenerator):
     """Code generator for csh-family of shells.
     """
@@ -39,8 +43,7 @@ endif\n""" % (name, name, heredir, name))
         pass
 
     def echo2out(self, s):
-        if verbose:
-            self.segs.append("""echo "[%s] %s"\n""" % (selfpid, s))
+        self.segs.append("""echo "%s"\n""" % (s,))
 
     def execute(self, s):
         self.segs.append("%s\n" % (s,))
@@ -95,12 +98,10 @@ if [ -n "${%s}" ]; then
 fi\n""" % (name, name, heredir, name))
 
     def echo2out(self, s):
-        if verbose:
-            self.segs.append("""echo "[%s] %s"\n""" % (selfpid, s))
+        self.segs.append("""echo "%s"\n""" % (s,))
 
     def echo2err(self, s):
-        if verbose:
-            self.segs.append("""echo "[%s] %s" 1>&2\n""" % (selfpid, s))
+        self.segs.append("""echo "%s" 1>&2\n""" % (s,))
 
     def execute(self, s):
         self.segs.append("%s\n" % (s,))
@@ -254,7 +255,7 @@ def augmentssmpath(pathtype, path):
     return pathtype, path
 
 def deduppaths():
-    cg.echo2err("[info] deduppaths:")
+    cg.log("info", "deduppaths:")
     for name in VARS:
         cg.deduppath(name)
 
@@ -273,7 +274,7 @@ def exportpendpath(pend, name, path):
         __exportpendpath(pend, name, path)
 
 def exportpendpaths(pend, basepath):
-    cg.echo2err("[info] exportpendpaths: (%s) (%s)" % (pend, basepath))
+    cg.log("info", "exportpendpaths: (%s) (%s)" % (pend, basepath))
 
     # table-driven
     for varnames, basenames, xdirsname, testfn in VARS_SETUPTABLE:
@@ -330,20 +331,20 @@ def loaddomain(pend, dompath):
         printe("fatal: loaddomain: invalid domain (%s)" % (dompath,))
         sys.exit(1)
 
-    cg.echo2err("[info] loaddomain: (%s) (%s)" % (pend, dompath))
+    cg.log("info", "loaddomain: (%s) (%s)" % (pend, dompath))
 
     # load from worse to better platforms
     loadedplatforms = []
     for platform in revplatforms:
         platpath = joinpath(dompath, platform)
         if isdir(platpath):
-            cg.echo2err("[info] dompath: (%s) (%s) (%s)" % (pend, dompath, platform))
+            cg.log("info", "dompath: (%s) (%s) (%s)" % (pend, dompath, platform))
             exportpendpaths(pend, platpath)
             loadprofiles(dompath, platform)
             loadedplatforms.append(platform)
 
     if not loadedplatforms:
-        cg.echo2err("[warning] loaddomain: no platforms loaded for domain (%s)" % (dompath,))
+        cg.log("warning", "loaddomain: no platforms loaded for domain (%s)" % (dompath,))
 
     if logger:
         log(dompath, "%s|loaddomain|%s|%s|%s|%s|%s|%s|%s|%s|%s" \
@@ -358,7 +359,7 @@ def loadpackage(pend, pkgpath):
         printe("fatal: loadpackage: invalid package (%s)" % (pkgpath,))
         sys.exit(1)
 
-    cg.echo2err("[info] loadpackage: (%s) (%s)" % (pend, pkgpath))
+    cg.log("info", "loadpackage: (%s) (%s)" % (pend, pkgpath))
 
     pkgname = os.path.basename(pkgpath)
     exportpendpaths(pend, pkgpath)
@@ -384,7 +385,7 @@ def loaddirectory(pend, dirpath):
                 platform0, shell, pend, _dirpath, dirpath))
 
 def loadprofiles(dompath, platform):
-    cg.echo2err("[info] loadprofiles: (%s) (%s)" % (dompath, platform))
+    cg.log("info", "loadprofiles: (%s) (%s)" % (dompath, platform))
 
     root = joinpath(dompath, platform, "etc/profile.d")
     if exists(root):
@@ -575,10 +576,10 @@ if __name__ == "__main__":
                     args = [arg[0]+"p", _xpath]+args
             elif arg == "--append":
                 pend = "append"
-                cg.echo2err("[info] pendmode: append")
+                cg.log("info", "pendmode: append")
             elif arg == "--prepend":
                 pend = "prepend"
-                cg.echo2err("[info] pendmode: prepend")
+                cg.log("info", "pendmode: prepend")
             elif arg == "-v":
                 verbose = True
             else:
