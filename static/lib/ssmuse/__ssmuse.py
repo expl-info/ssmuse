@@ -341,6 +341,10 @@ def loaddomain(pend, dompath):
             exportpendpaths(pend, platpath)
             loadprofiles(dompath, platform)
             loadedplatforms.append(platform)
+
+    if not loadedplatforms:
+        cg.echo2err("loaddomain: no platforms loaded for domain (%s)" % (dompath,))
+
     if logger:
         log(dompath, "%s|loaddomain|%s|%s|%s|%s|%s|%s|%s|%s|%s" \
             % (nowst, os.environ.get("LOGNAME"), hostname, platform0,
