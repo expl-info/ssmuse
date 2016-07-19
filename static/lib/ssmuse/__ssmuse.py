@@ -327,7 +327,7 @@ def loaddomain(pend, dompath):
     _dompath = dompath
 
     if dompath == None or not isdir(dompath):
-        printe("loaddomain: invalid domain (%s)" % (dompath,))
+        printe("fatal: loaddomain: invalid domain (%s)" % (dompath,))
         sys.exit(1)
 
     cg.echo2err("[info] loaddomain: (%s) (%s)" % (pend, dompath))
@@ -355,7 +355,7 @@ def loadpackage(pend, pkgpath):
     _pkgpath = pkgpath
 
     if pkgpath == None or not isdir(pkgpath):
-        printe("loadpackage: invalid package (%s)" % (pkgpath,))
+        printe("fatal: loadpackage: invalid package (%s)" % (pkgpath,))
         sys.exit(1)
 
     cg.echo2err("[info] loadpackage: (%s) (%s)" % (pend, pkgpath))
@@ -374,7 +374,7 @@ def loaddirectory(pend, dirpath):
     _dirpath = dirpath
 
     if dirpath == None or not isdir(dirpath):
-        printe("loaddirectory: invalid directory (%s)" % (dirpath,))
+        printe("fatal: loaddirectory: invalid directory (%s)" % (dirpath,))
         sys.exit(1)
 
     exportpendpaths(pend, dirpath)
