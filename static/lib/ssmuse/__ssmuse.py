@@ -254,7 +254,7 @@ def augmentssmpath(pathtype, path):
     return pathtype, path
 
 def deduppaths():
-    cg.echo2err("deduppaths:")
+    cg.echo2err("[info] deduppaths:")
     for name in VARS:
         cg.deduppath(name)
 
@@ -273,7 +273,7 @@ def exportpendpath(pend, name, path):
         __exportpendpath(pend, name, path)
 
 def exportpendpaths(pend, basepath):
-    cg.echo2err("exportpendpaths: (%s) (%s)" % (pend, basepath))
+    cg.echo2err("[info] exportpendpaths: (%s) (%s)" % (pend, basepath))
 
     # table-driven
     for varnames, basenames, xdirsname, testfn in VARS_SETUPTABLE:
@@ -330,20 +330,20 @@ def loaddomain(pend, dompath):
         printe("loaddomain: invalid domain (%s)" % (dompath,))
         sys.exit(1)
 
-    cg.echo2err("loaddomain: (%s) (%s)" % (pend, dompath))
+    cg.echo2err("[info] loaddomain: (%s) (%s)" % (pend, dompath))
 
     # load from worse to better platforms
     loadedplatforms = []
     for platform in revplatforms:
         platpath = joinpath(dompath, platform)
         if isdir(platpath):
-            cg.echo2err("dompath: (%s) (%s) (%s)" % (pend, dompath, platform))
+            cg.echo2err("[info] dompath: (%s) (%s) (%s)" % (pend, dompath, platform))
             exportpendpaths(pend, platpath)
             loadprofiles(dompath, platform)
             loadedplatforms.append(platform)
 
     if not loadedplatforms:
-        cg.echo2err("loaddomain: no platforms loaded for domain (%s)" % (dompath,))
+        cg.echo2err("[warning] loaddomain: no platforms loaded for domain (%s)" % (dompath,))
 
     if logger:
         log(dompath, "%s|loaddomain|%s|%s|%s|%s|%s|%s|%s|%s|%s" \
@@ -358,7 +358,7 @@ def loadpackage(pend, pkgpath):
         printe("loadpackage: invalid package (%s)" % (pkgpath,))
         sys.exit(1)
 
-    cg.echo2err("loadpackage: (%s) (%s)" % (pend, pkgpath))
+    cg.echo2err("[info] loadpackage: (%s) (%s)" % (pend, pkgpath))
 
     pkgname = os.path.basename(pkgpath)
     exportpendpaths(pend, pkgpath)
@@ -384,7 +384,7 @@ def loaddirectory(pend, dirpath):
                 platform0, shell, pend, _dirpath, dirpath))
 
 def loadprofiles(dompath, platform):
-    cg.echo2err("loadprofiles: (%s) (%s)" % (dompath, platform))
+    cg.echo2err("[info] loadprofiles: (%s) (%s)" % (dompath, platform))
 
     root = joinpath(dompath, platform, "etc/profile.d")
     if exists(root):
@@ -575,10 +575,10 @@ if __name__ == "__main__":
                     args = [arg[0]+"p", _xpath]+args
             elif arg == "--append":
                 pend = "append"
-                cg.echo2err("pendmode: append")
+                cg.echo2err("[info] pendmode: append")
             elif arg == "--prepend":
                 pend = "prepend"
-                cg.echo2err("pendmode: prepend")
+                cg.echo2err("[info] pendmode: prepend")
             elif arg == "-v":
                 verbose = True
             else:
