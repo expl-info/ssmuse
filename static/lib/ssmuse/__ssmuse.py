@@ -149,6 +149,12 @@ def getplatforms():
             platforms, _ = p.communicate()
     return filter(None, platforms.split())
 
+def is_dgpath(path):
+    for name in os.listdir(path):
+        if is_dompath(joinpath(path, name)):
+            return True
+    return False
+
 def is_dompath(path):
     return isdir(joinpath(path, "etc/ssm.d"))
 
@@ -231,14 +237,21 @@ def augmentssmpath(pathtype, path):
         path = realpath(path)
         if pathtype == None:
             pkgpath = matchpkgpath(path)
+
+            # note: keep the following order
             if pkgpath != None:
                 pathtype = "package"
             elif is_dompath(path):
                 pathtype = "domain"
+            elif is_dgpath(path):
+                pathtype = "dgroup"
             elif isdir(path):
+                # must be last
                 pathtype = "directory"
             else:
                 path = None
+        elif pathtype == "dgroup" and not is_dgpath(path):
+            path = None
         elif pathtype == "domain" and not is_dompath(path):
             path = None
         elif pathtype == "package":
@@ -323,6 +336,25 @@ def matchpkgpath(pkgpath):
     elif is_pkgpath(pkgpath):
         return pkgpath
     return None
+
+def loaddgroup(pend, dgpath):
+    _dgpath = dgpath
+
+    if dgpath == None or not isdir(dgpath):
+        printe("fatal: loaddgroup: invalid domain group (%s)" % (dgpath,))
+        sys.exit(1)
+    cg.log("info", "loaddgroup: (%s) (%s)" % (pend, dgpath))
+
+    # load matching domain group
+    loadeddomains = []
+    dgnames = filter(None, resolvepcvar(os.environ.get("SSMUSE_DGROUPNAMES", "")).split(":"))
+    for dgname in reversed(dgnames):
+        dompath = joinpath(dgpath, dgname)
+        if is_dompath(dompath):
+            loaddomain(pend, dompath)
+            loadeddomains.append(dgname)
+    if not loadeddomains:
+        cg.log("warning", "loaddgroup: no domains loaded for dgroup (%s)" % (dgpath,))
 
 def loaddomain(pend, dompath):
     _dompath = dompath
@@ -538,8 +570,9 @@ if __name__ == "__main__":
         cg.comment("date (%s)" % (time.asctime(),))
         cg.comment("platforms (%s)" % (" ".join(platforms),))
         cg.comment("depnames (%s)" % (" ".join(depnames),))
-        for name in ["SSMUSE_BASE", "SSMUSE_LOG", "SSMUSE_PATH",
-            "SSMUSE_PLATFORMS", "SSMUSE_XINCDIRS", "SSMUSE_XLIBDIRS"]:
+        for name in ["SSMUSE_BASE", "SSMUSE_DGROUPNAMES", "SSMUSE_LOG",
+            "SSMUSE_PATH", "SSMUSE_PLATFORMS", "SSMUSE_XINCDIRS",
+            "SSMUSE_XLIBDIRS"]:
             value = os.environ.get(name, "-").replace("\n\t", "  ")
             cg.comment("env (%s) (%s)" % (name, value))
 
@@ -558,6 +591,13 @@ if __name__ == "__main__":
                 cg.unexportvar("SSMUSE_PENDMODE")
                 _, dirpath = augmentssmpath("directory", _dirpath)
                 loaddirectory(pend, dirpath)
+            elif arg in ["-g", "+g"] and args:
+                pend = args[0] == "-" and "prepend" or "append"
+                _dgpath = args.pop(0)
+                cg.exportvar("SSMUSE_PENDMODE", pend)
+                _, dgpath = augmentssmpath("dgroup", _dgpath)
+                loaddgroup(pend, dgpath)
+                cg.ssmuseonchangeddeps(args)
             elif arg in ["-p", "+p"] and args:
                 pend = arg[0] == "-" and "prepend" or "append"
                 _pkgpath = args.pop(0)
@@ -568,7 +608,9 @@ if __name__ == "__main__":
             elif arg in ["-x", "+x"] and args:
                 _xpath = args.pop(0)
                 pathtype, xpath = augmentssmpath(None, _xpath)
-                if pathtype == "directory":
+                if pathtype == "dgroup":
+                    args = [arg[0]+"g", _xpath]+args
+                elif pathtype == "directory":
                     args = [arg[0]+"f", _xpath]+args
                 elif pathtype == "domain":
                     args = [arg[0]+"d", _xpath]+args
