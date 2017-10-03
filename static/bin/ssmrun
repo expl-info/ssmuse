@@ -1,0 +1,48 @@
+#! /bin/bash
+#
+# ssmrun
+
+function print_usage() {
+	PROGNAME=$(basename $0)
+	echo """\
+usage: ${PROGNAME} [-x <xpath> [...]] -- <progname> [<arg> ...]
+
+ssmuse-sh zero or more locations then call the program with
+environment.
+
+Uses bash shell."""
+}
+
+__SSMUSE_SH=$(readlink -f $(which ssmuse-sh))
+
+# main
+if [ "$1" = "-h" -o "$1" = "--help" ]; then
+	print_usage
+	exit 0
+fi
+
+if ! stat "${__SSMUSE_SH}" 2> /dev/null 1>&2 ; then
+	echo "error: cannot find ssmuse-sh" 1>&2
+	exit 1
+fi
+
+while [ $# -ge 2 ]; do
+	arg=$1; shift 1
+	case ${arg} in
+	--)
+		echo "args ($@)"
+		exec $@
+		;;
+	-x)
+		__ssmrun_xarg=$1; shift 1
+		. ${__SSMUSE_SH} -x "${__ssmrun_xarg}"
+		;;
+	*)
+		echo "error: bad/missing argument" 1>&2
+		exit 1
+		;;
+	esac
+done
+
+echo "error: bad/missing argument" 1>&2
+exit 1
