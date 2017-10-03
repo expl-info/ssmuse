@@ -300,7 +300,7 @@ get_compatible_platforms() {
 
 	while [ "${platform}" != "" ]; do
 		plat_dist=${platform%%-*}
-		filename="${platforms_dir}/${plat_dist}/${platform}"
+		filename="${PLATFORMS_DIR}/${plat_dist}/${platform}"
 
 		if [ -r "${filename}" ]; then
 			line=`cat "${filename}"`
@@ -320,15 +320,24 @@ print_usage() {
 	PROG_NAME=$(basename $0)
 	echo "\
 usage: ${PROG_NAME} [<primary_platform>]
+       ${PROG_NAME} --all
 
 Determine the SSM platforms (primary and compatible) for the host.
-If <primay_platform> is given, then use it instead of automatically
-sensing it from the host."
+
+If <primay_platform> is given, use it instead of automatically
+sensing it from the host.
+
+Use --all to list all known platforms."
 }
 
 #
 # main
 #
+
+# must be run with #! or full path
+HEREFILE=$(readlink -f "$0")
+HEREDIR=$(dirname "${HEREFILE}")
+PLATFORMS_DIR=$(readlink -f "${HEREDIR}/../../etc/ssmuse/platforms")
 
 NEWLINE='
 '
@@ -337,6 +346,13 @@ if [ $# -eq 1 ]; then
 	case ${1} in
 	-h|--help)
 		print_usage
+		exit 0
+		;;
+	--all)
+		cd "${HEREDIR}/../../etc/ssmuse/platforms"
+		for n in *; do
+			(cd $n; ls -1 *-*) 2> /dev/null
+		done
 		exit 0
 		;;
 	-*)
@@ -351,11 +367,6 @@ elif [ $# -gt 1 ]; then
 	echo "error: bad/missing argument" 1>&2
 	exit 1
 fi
-
-# must be run with #! or full path
-herefile=$(readlink -f "$0")
-heredir=$(dirname "${herefile}")
-platforms_dir=$(readlink -f "${heredir}/../../etc/ssmuse/platforms")
 
 if [ -z "${platform}" ]; then
 	UNAME_S=`uname -s`
