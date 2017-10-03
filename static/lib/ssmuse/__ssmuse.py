@@ -504,7 +504,7 @@ usage: ssmuse-sh [options]
        ssmuse-csh [options]
 
 Load domains, packages, and generic/non-SSM directory tree. This
-program should be sourced for the results to be incorporated into
+program must be sourced for the results to be incorporated into
 the current shell.
 
 Options:
@@ -516,10 +516,13 @@ Options:
         Print help.
 -p|+p <pkgpath>
         Load package.
+-x|+x <xpath>
+        Load one of domain, directory, package. ssmuse automatically
+        senses what is at the xpath location.
 --noeval
         Do not evaluate. Useful for debugging.
 
-Use leading - (e.g., -d) to prepend new paths, leading + to append
+Use leading - (e.g., -x) to prepend new paths, leading + to append
 new paths."""
 
 if __name__ == "__main__":
