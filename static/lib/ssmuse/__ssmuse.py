@@ -186,7 +186,7 @@ VARS_SETUPTABLE = [
     # envvars, basenames, XDIR envvar, testfn
     (["PATH"], ["/bin"], None, None),
     (["CPATH", "C_INCLUDE_PATH", "CPLUS_INCLUDE_PATH", "OBJC_INCLUDE_PATH", "SSM_INCLUDE_PATH"], ["/include"], "SSMUSE_XINCDIRS", isnotemptydir),
-    (["LIBPATH", "LD_LIBRARY_PATH"], ["/lib"], "SSMUSE_XLIBDIRS", isnotlibfreedir),
+    (["LIBPATH", "LIBRARY_PATH", "LD_LIBRARY_PATH"], ["/lib"], "SSMUSE_XLIBDIRS", isnotlibfreedir),
     (["MANPATH"], ["/man", "/share/man"], None, None),
     (["PYTHONPATH"], ["/lib/python"], None, None),
     (["TCL_LIBRARY"], ["/lib/tcl"], None, None),
