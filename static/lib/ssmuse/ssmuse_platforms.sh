@@ -324,7 +324,7 @@ usage: ${PROG_NAME} [<primary_platform>]
 
 Determine the SSM platforms (primary and compatible) for the host.
 
-If <primay_platform> is given, use it instead of automatically
+If <primary_platform> is given, use it instead of automatically
 sensing it from the host.
 
 Use --all to list all known platforms."
