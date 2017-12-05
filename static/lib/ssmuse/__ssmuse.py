@@ -509,13 +509,13 @@ the current shell.
 
 Options:
 -d|+d <dompath>
-        Load domain.
+        Load domain. See -x and +x.
 -f|+f <dirpath>
-        Load generic/non-SSM directory tree.
+        Load generic/non-SSM directory tree. See -x and +x.
 -h|--help
         Print help.
 -p|+p <pkgpath>
-        Load package.
+        Load package. See -x and +x.
 -x|+x <xpath>
         Load one of domain, directory, package. ssmuse automatically
         senses what is at the xpath location.
